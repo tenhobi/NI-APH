@@ -23,4 +23,4 @@ PixiJS boilerplate for NI-APH
     - There is no exit. The goal is to survive as long as possible.
     - Power-ups are hidden in destructible blocks, they can be extracted by breaking the block but they can also be destroyed by direct explosion.
 - Technical mechanic
-    - bot
+    - AI behavior - bot, attacking players, avoiding bombs
