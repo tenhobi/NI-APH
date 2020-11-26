@@ -1,15 +1,13 @@
-PixiJS boilerplate for NI-APH
-=========
+# Bomber f*ing man
 
-## How to start
+## 🚀 How to start
 
-* Clone content of this repository into your local folder
+* Clone this repository
 * Install [Node Package Manager](https://www.npmjs.com)
 * Execute command `npm install` and `npm start`
-* Open `localhost:1234/creature.html` in your browser
+* Open `localhost:1234` in your browser
 
-
-## Bomberman
+## 💡 Task
 
 - Genre: Arcade
 - Library: PixiJS
@@ -24,3 +22,12 @@ PixiJS boilerplate for NI-APH
     - Power-ups are hidden in destructible blocks, they can be extracted by breaking the block but they can also be destroyed by direct explosion.
 - Technical mechanic
     - AI behavior - bot, attacking players, avoiding bombs
+
+## 📃 License
+
+Licensed under the [MIT License](LICENSE).
+
+Assets:
+
+- https://opengameart.org/content/bomb-party-the-complete-set
+- https://opengameart.org/content/cheerful-upbeat-tune

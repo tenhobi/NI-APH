@@ -1,16 +1,34 @@
 {
+  "name": "bomberman",
+  "author": "Honza Bittner",
+  "version": "0.2.0",
+  "license": "MIT",
   "scripts": {
-    "start": "parcel examples/*.html --out-dir www",
-    "start_no_map": "parcel examples/*.html --out-dir www --no-source-maps",
-    "deploy": "parcel build examples/*.html --no-source-maps"
+    "prebuild": "node scripts/prebuild-examples.js",
+    "start": "npm run prebuild && parcel view/*.html --out-dir build",
+    "start_no_map": "npm run prebuild && parcel view/*.html --out-dir build --no-source-maps",
+    "deploy": "npm run prebuild && parcel build view/*.html --no-source-maps"
+  },
+  "dependencies": {
+    "core-js": "^3.6.5",
+    "ecs.js": "^1.6.1",
+    "pixi": "^0.3.1",
+    "pixi-sound": "^3.0.5",
+    "pixi.js": "^5.3.3"
   },
   "devDependencies": {
-    "@types/pixi.js": "^4.7.1",
-    "parcel-bundler": "1.10.0",
-    "parcel-plugin-json-url-loader": "^0.1.1",
-    "parcel-plugin-static-files-copy": "^1.2.1",
-    "pixi.js": "^4.7.3",
-    "typescript": "^3.1.1"
-  },
-  "dependencies": {}
+    "@typescript-eslint/eslint-plugin": "4.0.1",
+    "@typescript-eslint/parser": "4.0.1",
+    "eslint": "7.8.1",
+    "eslint-plugin-babel": "5.3.1",
+    "eslint-plugin-import": "2.22.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-standard": "4.0.1",
+    "mathjax-node": "^2.1.1",
+    "parcel": "^1.12.4",
+    "prismjs": "^1.20.0",
+    "pug": "^2.0.4",
+    "sass": "^1.23.0",
+    "typescript": "^4.0.3"
+  }
 }
