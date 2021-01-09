@@ -1,8 +1,11 @@
 import {GameManager} from "./game-manager";
 import {MusicComponent} from "./music-component";
+import {PlayerCollisionResolver} from "./player-collision-resolver";
 import {PlayerMovementResolver} from "./player-movement-resolver";
-import {PlayerCollisionTrigger} from "./player-collision-trigger";
 
 export {
-
+    GameManager,
+    MusicComponent,
+    PlayerCollisionResolver,
+    PlayerMovementResolver,
 }

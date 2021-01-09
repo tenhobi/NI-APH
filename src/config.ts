@@ -14,11 +14,17 @@ class Config {
 
     static PLAYER_SPEED: number = 0.005;
 
-    static PLAYER_UP = ECS.Keys.KEY_UP;
-    static PLAYER_RIGHT = ECS.Keys.KEY_RIGHT;
-    static PLAYER_DOWN = ECS.Keys.KEY_DOWN;
-    static PLAYER_LEFT = ECS.Keys.KEY_LEFT;
-    static PLAYER_BOMB = ECS.Keys.KEY_SPACE;
+    static KEY_UP = ECS.Keys.KEY_UP;
+    static KEY_RIGHT = ECS.Keys.KEY_RIGHT;
+    static KEY_DOWN = ECS.Keys.KEY_DOWN;
+    static KEY_LEFT = ECS.Keys.KEY_LEFT;
+    static KEY_BOMB = ECS.Keys.KEY_SPACE;
+
+    static KEY2_UP = ECS.Keys.KEY_W;
+    static KEY2_RIGHT = ECS.Keys.KEY_D;
+    static KEY2_DOWN = ECS.Keys.KEY_S;
+    static KEY2_LEFT = ECS.Keys.KEY_A;
+    static KEY2_BOMB = ECS.Keys.KEY_G;
 }
 
 export {

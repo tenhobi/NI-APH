@@ -6,25 +6,40 @@ import {BombController} from "../bomb/bomb-controller";
 import AnimatedSprite from "../../../libs/pixi-ecs/engine/game-objects/animated-sprite";
 import {Coords} from "../../utils";
 
-type PlayerWantsToMoveMessage = {
+type PlayerMoveMessage = {
     player: ECS.Container,
     futureBounds: PIXI.Rectangle,
 }
 
 class PlayerController extends ECS.Component {
-    private upTextures = Factory.createPlayerTexturesUp();
-    private rightTextures = Factory.createPlayerTexturesRight();
-    private downTextures = Factory.createPlayerTexturesDown();
-    private leftTextures = Factory.createPlayerTexturesLeft();
+    private upTextures;
+    private rightTextures;
+    private downTextures;
+    private leftTextures;
 
     private lastPlacedBomb: Coords;
     private animatedSprite: AnimatedSprite;
 
+    private player: number;
+
+    constructor(player: number) {
+        super();
+        this.player = player;
+    }
+
     onInit() {
         super.onInit();
+
         this.animatedSprite = this.owner.asAnimatedSprite();
         this.animatedSprite.animationSpeed = 0.2;
         this.animatedSprite.loop = false;
+
+        let factory = new Factory();
+        this.upTextures = factory.createPlayerTexturesUp(this.player);
+        this.rightTextures = factory.createPlayerTexturesRight(this.player);
+        this.downTextures = factory.createPlayerTexturesDown(this.player);
+        this.leftTextures = factory.createPlayerTexturesLeft(this.player);
+
         this.owner.assignAttribute(Attrs.SPEED, Config.PLAYER_SPEED);
         this.owner.assignAttribute(Attrs.PLAYER_Y, this.owner.position.y);
         this.owner.assignAttribute(Attrs.PLAYER_X, this.owner.position.x);
@@ -50,7 +65,7 @@ class PlayerController extends ECS.Component {
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
             futureBounds: futurePositionBounds,
-        } as PlayerWantsToMoveMessage);
+        } as PlayerMoveMessage);
     }
 
     protected moveRight(units: number) {
@@ -65,7 +80,7 @@ class PlayerController extends ECS.Component {
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
             futureBounds: futurePositionBounds,
-        } as PlayerWantsToMoveMessage);
+        } as PlayerMoveMessage);
     }
 
     protected moveUp(units: number) {
@@ -76,10 +91,11 @@ class PlayerController extends ECS.Component {
 
         const futurePositionBounds = this.owner.getBounds().clone();
         futurePositionBounds.y -= units;
+
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
             futureBounds: futurePositionBounds,
-        } as PlayerWantsToMoveMessage);
+        } as PlayerMoveMessage);
     }
 
     protected moveDown(units: number) {
@@ -90,10 +106,11 @@ class PlayerController extends ECS.Component {
 
         const futurePositionBounds = this.owner.getBounds().clone();
         futurePositionBounds.y += units;
+
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
             futureBounds: futurePositionBounds,
-        } as PlayerWantsToMoveMessage);
+        } as PlayerMoveMessage);
     }
 
     protected placeBomb() {
@@ -139,7 +156,7 @@ class PlayerController extends ECS.Component {
         const bomb = new ECS.Builder(this.owner.scene)
             .localPos(x, y)
             .withTag(Tags.BOMB)
-            .asSprite(Factory.createTexture(8 * Config.TEXTURE_WIDTH, 18 * Config.TEXTURE_HEIGHT, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT))
+            .asSprite(new Factory().createTexture(8 * Config.TEXTURE_WIDTH, 18 * Config.TEXTURE_HEIGHT, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT))
             .withParent(this.owner.scene.stage)
             .withComponent(new BombController())
             .scale(Config.TEXTURE_SCALE)
@@ -149,5 +166,5 @@ class PlayerController extends ECS.Component {
 
 export {
     PlayerController,
-    PlayerWantsToMoveMessage,
+    PlayerMoveMessage,
 }

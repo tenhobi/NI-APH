@@ -32,7 +32,7 @@ class Game {
     }
 
     loadGame() {
-        Factory.loadGame(this.engine.scene);
+        new Factory().loadGame(this.engine.scene);
     }
 }
 

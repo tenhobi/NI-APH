@@ -11,8 +11,8 @@ class PlayerKeyboardController extends PlayerController {
 
     keyInputCmp: ECS.KeyInputComponent;
 
-    constructor(keyUp: number, keyRight: number, keyDown: number, keyLeft: number, keyBomb: number) {
-        super();
+    constructor(player: number = 0, keyUp: ECS.Keys, keyRight: ECS.Keys, keyDown: ECS.Keys, keyLeft: ECS.Keys, keyBomb: ECS.Keys) {
+        super(player);
         this.keyUp = keyUp;
         this.keyRight = keyRight;
         this.keyDown = keyDown;
