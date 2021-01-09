@@ -11,6 +11,8 @@ class Config {
     static BOMB_TIMEOUT: number = 2500;
     static BOMB_TIMEOUT_DEVIATION: number = 500;
     static BOMB_FLAME_LIVING_TIME: number = 300;
+    static BOMB_DEFAULT_COUNT: number = 1;
+    static BOMB_POWER: number = 1;
 
     static PLAYER_SPEED: number = 0.005;
 

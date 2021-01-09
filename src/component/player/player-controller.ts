@@ -1,14 +1,19 @@
 import * as ECS from "../../../libs/pixi-ecs";
+import {Message} from "../../../libs/pixi-ecs";
 import {Config} from "../../config";
-import {Attrs, Tags, Messages} from "../../constants";
-import {CollisionUtils, Factory} from "../../utils";
-import {BombController} from "../bomb/bomb-controller";
+import {Attrs, Messages} from "../../constants";
+import {Coords, Factory} from "../../utils";
 import AnimatedSprite from "../../../libs/pixi-ecs/engine/game-objects/animated-sprite";
-import {Coords} from "../../utils";
+import {BombPlacedMessage} from "../stage/game-manager";
 
 type PlayerMoveMessage = {
     player: ECS.Container,
     futureBounds: PIXI.Rectangle,
+}
+
+type PlaceBombMessage = {
+    player: ECS.Container,
+    coords: Coords,
 }
 
 class PlayerController extends ECS.Component {
@@ -17,14 +22,17 @@ class PlayerController extends ECS.Component {
     private downTextures;
     private leftTextures;
 
+    private playing: boolean;
     private lastPlacedBomb: Coords;
     private animatedSprite: AnimatedSprite;
+    private maxBombCount: number;
+    private bombsLeftCount: number;
 
-    private player: number;
+    private readonly playerNumber: number;
 
     constructor(player: number) {
         super();
-        this.player = player;
+        this.playerNumber = player;
     }
 
     onInit() {
@@ -35,32 +43,79 @@ class PlayerController extends ECS.Component {
         this.animatedSprite.loop = false;
 
         let factory = new Factory();
-        this.upTextures = factory.createPlayerTexturesUp(this.player);
-        this.rightTextures = factory.createPlayerTexturesRight(this.player);
-        this.downTextures = factory.createPlayerTexturesDown(this.player);
-        this.leftTextures = factory.createPlayerTexturesLeft(this.player);
+        this.upTextures = factory.createPlayerTexturesUp(this.playerNumber);
+        this.rightTextures = factory.createPlayerTexturesRight(this.playerNumber);
+        this.downTextures = factory.createPlayerTexturesDown(this.playerNumber);
+        this.leftTextures = factory.createPlayerTexturesLeft(this.playerNumber);
 
+        this.maxBombCount = Config.BOMB_DEFAULT_COUNT;
+        this.bombsLeftCount = this.maxBombCount;
+
+        this.owner.assignAttribute(Attrs.BOMB_POWER, Config.BOMB_POWER)
         this.owner.assignAttribute(Attrs.SPEED, Config.PLAYER_SPEED);
         this.owner.assignAttribute(Attrs.PLAYER_Y, this.owner.position.y);
         this.owner.assignAttribute(Attrs.PLAYER_X, this.owner.position.x);
-        this.owner.assignAttribute(Attrs.PLAYER_BOMB, null);
+        this.owner.assignAttribute(Attrs.LAST_PLAYER_BOMB, null);
+        this.owner.assignAttribute(Attrs.PLAYING, true);
+        this.playing = true;
+
+        this.subscribe(Messages.BOMB_EXPLOSION_FINISHED, Messages.BOMB_PLACED);
+    }
+
+    onMessage(msg: Message): any {
+        if (msg.action == Messages.BOMB_EXPLOSION_FINISHED) {
+            let payload = msg.data as BombExplosionFinishedMessage;
+            let { player } = payload;
+
+            if (this.owner == player) {
+                this.bombsLeftCount++;
+
+                console.log("__ INCREMENT");
+
+                if (this.bombsLeftCount > this.maxBombCount) {
+                    this.bombsLeftCount = this.maxBombCount;
+                }
+            }
+        } else if (msg.action == Messages.BOMB_PLACED) {
+            let payload = msg.data as BombPlacedMessage;
+            let { player } = payload;
+
+            if (this.owner == player) {
+                this.bombsLeftCount--;
+
+                console.log("__ DECREMENT");
+
+                if (this.bombsLeftCount < 0) {
+                    this.bombsLeftCount = 0;
+                }
+            }
+        }
     }
 
     onUpdate(delta: number, absolute: number) {
         super.onUpdate(delta, absolute);
 
-        this.owner.position.y = this.owner.getAttribute<number>(Attrs.PLAYER_Y);
-        this.owner.position.x = this.owner.getAttribute<number>(Attrs.PLAYER_X);
-        this.lastPlacedBomb = this.owner.getAttribute<Coords>(Attrs.PLAYER_BOMB);
+        if (this.playing) {
+            this.owner.position.y = this.owner.getAttribute<number>(Attrs.PLAYER_Y);
+            this.owner.position.x = this.owner.getAttribute<number>(Attrs.PLAYER_X);
+            this.lastPlacedBomb = this.owner.getAttribute<Coords>(Attrs.LAST_PLAYER_BOMB);
+            this.playing = this.owner.getAttribute<boolean>(Attrs.PLAYING);
+
+            if (this.playing == false) {
+                this.animatedSprite.texture.destroy();
+            }
+        }
     }
 
-    protected moveLeft(units: number) {
+    protected moveLeft(delta: number) {
+        if (!this.playing) return;
+
         if (!this.animatedSprite.playing) {
             this.animatedSprite.textures = this.leftTextures;
             this.animatedSprite.play();
         }
         const futurePositionBounds = this.owner.getBounds().clone();
-        futurePositionBounds.x -= units;
+        futurePositionBounds.x -= delta * this.owner.getAttribute<number>(Attrs.SPEED);
 
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
@@ -68,14 +123,16 @@ class PlayerController extends ECS.Component {
         } as PlayerMoveMessage);
     }
 
-    protected moveRight(units: number) {
+    protected moveRight(delta: number) {
+        if (!this.playing) return;
+
         if (!this.animatedSprite.playing) {
             this.animatedSprite.textures = this.rightTextures;
             this.animatedSprite.play();
         }
 
         const futurePositionBounds = this.owner.getBounds().clone();
-        futurePositionBounds.x += units;
+        futurePositionBounds.x += delta * this.owner.getAttribute<number>(Attrs.SPEED);
 
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
@@ -83,14 +140,16 @@ class PlayerController extends ECS.Component {
         } as PlayerMoveMessage);
     }
 
-    protected moveUp(units: number) {
+    protected moveUp(delta: number) {
+        if (!this.playing) return;
+
         if (!this.animatedSprite.playing) {
             this.animatedSprite.textures = this.upTextures;
             this.animatedSprite.play();
         }
 
         const futurePositionBounds = this.owner.getBounds().clone();
-        futurePositionBounds.y -= units;
+        futurePositionBounds.y -= delta * this.owner.getAttribute<number>(Attrs.SPEED);
 
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
@@ -98,14 +157,16 @@ class PlayerController extends ECS.Component {
         } as PlayerMoveMessage);
     }
 
-    protected moveDown(units: number) {
+    protected moveDown(delta: number) {
+        if (!this.playing) return;
+
         if (!this.animatedSprite.playing) {
             this.animatedSprite.textures = this.downTextures;
             this.animatedSprite.play();
         }
 
         const futurePositionBounds = this.owner.getBounds().clone();
-        futurePositionBounds.y += units;
+        futurePositionBounds.y += delta * this.owner.getAttribute<number>(Attrs.SPEED);
 
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
@@ -114,57 +175,24 @@ class PlayerController extends ECS.Component {
     }
 
     protected placeBomb() {
+        if (!this.playing) return;
+
+        if (this.bombsLeftCount <= 0) {
+            return;
+        }
+
         let x = Math.floor(this.owner.x);
         let y = Math.floor(this.owner.y);
 
-
-        if (this.canAddBombToLocation(x, y)) {
-            this.addBomb(x, y);
-        }
-    }
-
-    protected canAddBombToLocation(x: number, y: number): boolean {
-        const emptyCells = this.scene.findObjectsByTag(Tags.EMPTY);
-        const bombs = this.scene.findObjectsByTag(Tags.BOMB);
-
-        let isEmptyCell = false;
-        // Is empty cell?
-        for (let cell of emptyCells) {
-            if (cell.x == x && cell.y == y) {
-                isEmptyCell = true;
-                break;
-            }
-        }
-        if (!isEmptyCell) {
-            return false;
-        }
-
-        // Is there another bomb?
-        for (let bomb of bombs) {
-            if (bomb.x == x && bomb.y == y) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    protected addBomb(x: number, y: number) {
-        this.owner.assignAttribute(Attrs.PLAYER_BOMB, {x, y});
-        this.lastPlacedBomb = {x, y};
-
-        const bomb = new ECS.Builder(this.owner.scene)
-            .localPos(x, y)
-            .withTag(Tags.BOMB)
-            .asSprite(new Factory().createTexture(8 * Config.TEXTURE_WIDTH, 18 * Config.TEXTURE_HEIGHT, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT))
-            .withParent(this.owner.scene.stage)
-            .withComponent(new BombController())
-            .scale(Config.TEXTURE_SCALE)
-            .build();
+        this.sendMessage(Messages.BOMB_PLACE, {
+            player: this.owner,
+            coords: {x, y},
+        } as PlaceBombMessage);
     }
 }
 
 export {
     PlayerController,
     PlayerMoveMessage,
+    PlaceBombMessage,
 }

@@ -20,7 +20,7 @@ class GameLoader {
                     // inside
                     || (x > 0 && x < Config.SCENE_WIDTH - 1 && y > 0 && y < Config.SCENE_WIDTH - 1 && x % 2 == 0 && y % 2 == 0)
                 ) {
-                    sprite = new ECS.Sprite('', factory.createTexture(Config.TEXTURE_WIDTH, 0, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT));
+                    sprite = new ECS.Sprite('', factory.createSolidWallTexture());
                     sprite.addTag(Tags.SOLID_WALL);
                 } else if (
                     // left wall
@@ -28,10 +28,10 @@ class GameLoader {
                     // right wall
                     || (x == Config.SCENE_WIDTH - 1 && y != Config.SCENE_WIDTH - 1)
                 ) {
-                    sprite = new ECS.Sprite('', factory.createTexture(0, 0, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT));
+                    sprite = new ECS.Sprite('', factory.createSolidWallTexture());
                     sprite.addTag(Tags.SOLID_WALL);
                 } else {
-                    sprite = new ECS.Sprite('', factory.createTexture(3 * Config.TEXTURE_WIDTH, 3 * Config.TEXTURE_HEIGHT, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT));
+                    sprite = new ECS.Sprite('', factory.createEmptyTexture());
                     sprite.addTag(Tags.EMPTY);
                 }
 
@@ -48,7 +48,7 @@ class GameLoader {
                 if (GameLoader.isCellOnPlayerSpawner(emptyCell))
                     continue;
 
-                (emptyCell as ECS.Sprite).texture = factory.createTexture(9 * Config.TEXTURE_WIDTH, 13 * Config.TEXTURE_HEIGHT, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT);
+                (emptyCell as ECS.Sprite).texture = factory.createBreakableWallTexture();
                 emptyCell.removeTag(Tags.EMPTY);
                 emptyCell.addTag(Tags.BREAKABLE_WALL);
             }

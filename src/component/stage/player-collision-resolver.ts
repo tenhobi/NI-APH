@@ -1,60 +1,42 @@
 import * as ECS from "../../../libs/pixi-ecs";
 import {Attrs, Messages, Tags} from "../../constants";
-import {CollisionUtils, Coords} from "../../utils";
 import {PlayerMoveMessage} from "../player/player-controller";
+import {CollisionMessage} from "./player-collision-watcher";
+import {Coords} from "../../utils";
 
 class PlayerCollisionResolver extends ECS.Component {
     onInit() {
         super.onInit();
-        this.subscribe(Messages.PLAYER_WANTS_TO_MOVE);
+        this.subscribe(Messages.PLAYER_COLLIDED, Messages.MOVE_PLAYER);
     }
 
     onMessage(msg: ECS.Message): any {
-        if (msg.action == Messages.PLAYER_WANTS_TO_MOVE) {
-            const payload = msg.data as PlayerMoveMessage;
-            const {player, futureBounds} = payload;
+        if (msg.action == Messages.MOVE_PLAYER) {
+            const movePayload = msg.data as PlayerMoveMessage;
+            const {player, futureBounds} = movePayload;
 
-            if (!this.hasCollision(futureBounds, player)) {
-                this.sendMessage(Messages.MOVE_PLAYER, payload);
+            player.assignAttribute(Attrs.PLAYER_X, futureBounds.x);
+            player.assignAttribute(Attrs.PLAYER_Y, futureBounds.y);
+        } else if (msg.action == Messages.PLAYER_COLLIDED) {
+            const collisionPayload = msg.data as CollisionMessage;
+            const {player, collider, futurePosition} = collisionPayload;
+
+            if (collider.hasTag(Tags.POWER_UP_BOMB)) {
+                collider.removeTag(Tags.POWER_UP);
+                collider.removeTag(Tags.POWER_UP_BOMB);
+                collider.destroy();
+
+                // TODO: send player bomb ++
+            }
+
+            if (collider.hasTag(Tags.POWER_UP_SPEED)) {
+                collider.removeTag(Tags.POWER_UP);
+                collider.removeTag(Tags.POWER_UP_SPEED);
+                collider.destroy();
+
+                // TODO: send player speed ++
             }
         }
-    }
-
-    protected hasCollision(futurePosition: PIXI.Rectangle, player: ECS.Container) {
-        const lastPlacedBomb = player.getAttribute<Coords>(Attrs.PLAYER_BOMB);
-
-        const solidWalls = this.scene.findObjectsByTag(Tags.SOLID_WALL);
-        const breakableWalls = this.scene.findObjectsByTag(Tags.BREAKABLE_WALL);
-        const bombs = this.scene.findObjectsByTag(Tags.BOMB);
-        const colliders = [...solidWalls, ...breakableWalls, ...bombs];
-
-        for (let collider of colliders) {
-            const playerBox = futurePosition;
-            const cBox = collider.getBounds();
-
-            const horizontalIntersection = CollisionUtils.hasHorizontalIntersection(playerBox, cBox);
-            const verticalIntersection = CollisionUtils.hasVerticalIntersection(playerBox, cBox);
-
-            const collides = horizontalIntersection > 0 && verticalIntersection > 0;
-
-            if (collider.hasTag(Tags.BOMB)) {
-                if (lastPlacedBomb != null) {
-                    if (lastPlacedBomb.x == Math.floor(cBox.x) && lastPlacedBomb.y == Math.floor(cBox.y)) {
-                        if (collides) {
-                            return false;
-                        } else {
-                            player.assignAttribute(Attrs.PLAYER_BOMB, null);
-                        }
-                    }
-                }
-            }
-
-            if (collides) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
 

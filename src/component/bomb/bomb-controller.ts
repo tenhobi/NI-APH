@@ -1,47 +1,66 @@
 import * as ECS from "../../../libs/pixi-ecs";
 import {Config} from "../../config";
 import {Attrs, Tags, Messages} from "../../constants";
-import {Factory} from "../../utils";
+import {Coords, Factory} from "../../utils";
+import {Message} from "../../../libs/pixi-ecs";
+import {ExplodeNowMessage} from "../stage/flames-collision-resolver";
+
+type BombExplodedMessage = {
+    player: ECS.Container,
+    coords: Coords,
+    power: number,
+}
 
 class BombController extends ECS.Component {
-    private timers: number[] = [];
+    private timer: number;
+    private readonly player: ECS.Container;
+    private factory: Factory;
+    private bombPower: number;
 
-    onInit() {
-        this.timers.push(setTimeout(() => this.fireBomb(), Config.BOMB_TIMEOUT + Math.random() * Config.BOMB_TIMEOUT_DEVIATION));
+    constructor(props) {
+        super(null);
+        this.player = props.player;
     }
 
-    onUpdate(delta: number, absolute: number) {
+    onInit() {
+        this.factory = new Factory();
+        this.bombPower = this.player.getAttribute<number>(Attrs.BOMB_POWER);
+        this.timer = setTimeout(() => this.fireBomb(), Config.BOMB_TIMEOUT + Math.random() * Config.BOMB_TIMEOUT_DEVIATION);
+        this.subscribe(Messages.EXPLODE_NOW);
+    }
 
+    onMessage(msg: Message): any {
+        if (msg.action == Messages.EXPLODE_NOW) {
+            let payload = msg.data as ExplodeNowMessage;
+            let {bomb} = payload;
+
+            if (bomb == this.owner) {
+                this.fireBomb();
+            }
+        }
     }
 
     fireBomb() {
-        this.addFlame(this.owner.x, this.owner.y);
-    }
+        this.owner.removeTag(Tags.BOMB);
+        this.sendMessage(Messages.BOMB_EXPLODED, {
+            player: this.player,
+            coords: {x: this.owner.x, y: this.owner.y},
+            power: this.bombPower,
+        } as BombExplodedMessage);
 
-    finishExplosion() {
         this.owner.destroy();
     }
 
     onDetach() {
-        for (let timer of this.timers) {
-            clearTimeout(timer);
-        }
+        this.clearTimeouts();
     }
 
-    // TODO:
-    private addFlame(x, y) {
-        const flame = new ECS.Builder(this.scene)
-            .relativePos(0, 0)
-            .withName('flame')
-            .withTag(Tags.FLAME)
-            .asSprite(new Factory().createTexture(2 * Config.TEXTURE_WIDTH, 18 * Config.TEXTURE_HEIGHT, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT))
-            .withParent(this.owner)
-            .build();
-
-        this.timers.push(setTimeout(() => this.finishExplosion(), Config.BOMB_FLAME_LIVING_TIME));
+    public clearTimeouts() {
+        clearTimeout(this.timer);
     }
 }
 
 export {
     BombController,
+    BombExplodedMessage,
 }

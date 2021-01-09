@@ -1,6 +1,5 @@
 import * as ECS from "../../../libs/pixi-ecs";
 import {PlayerController} from "./player-controller";
-import {Attrs} from "../../constants";
 
 class PlayerKeyboardController extends PlayerController {
     private readonly keyUp: number;
@@ -29,16 +28,16 @@ class PlayerKeyboardController extends PlayerController {
         super.onUpdate(delta, absolute);
 
         if (this.keyInputCmp.isKeyPressed(this.keyUp)) {
-            this.moveUp(delta * this.owner.getAttribute<number>(Attrs.SPEED));
+            this.moveUp(delta);
         }
         if (this.keyInputCmp.isKeyPressed(this.keyDown)) {
-            this.moveDown(delta * this.owner.getAttribute<number>(Attrs.SPEED));
+            this.moveDown(delta);
         }
         if (this.keyInputCmp.isKeyPressed(this.keyLeft)) {
-            this.moveLeft(delta * this.owner.getAttribute<number>(Attrs.SPEED));
+            this.moveLeft(delta);
         }
         if (this.keyInputCmp.isKeyPressed(this.keyRight)) {
-            this.moveRight(delta * this.owner.getAttribute<number>(Attrs.SPEED));
+            this.moveRight(delta);
         }
         if (this.keyInputCmp.isKeyPressed(this.keyBomb)) {
             this.keyInputCmp.handleKey(this.keyBomb);
