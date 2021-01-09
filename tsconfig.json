@@ -12,7 +12,8 @@
   },
   "include": [
     "./examples/src/**/*",
-    "./libs/**/*"
+    "./libs/**/*",
+    "./libs/**/**/*"
   ],
   "exclude": [
     "./node_modules",

@@ -2,7 +2,6 @@ import * as ECS from "../../../libs/pixi-ecs";
 import {Attrs, Messages, Tags} from "../../constants";
 import {PlayerMoveMessage} from "../player/player-controller";
 import {CollisionMessage} from "./player-collision-watcher";
-import {Coords} from "../../utils";
 import {Config} from "../../config";
 
 class PlayerCollisionResolver extends ECS.Component {

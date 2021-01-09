@@ -2,10 +2,9 @@ import * as ECS from "../../../libs/pixi-ecs";
 import {Attrs, Messages, Tags} from "../../constants";
 import {Message} from "../../../libs/pixi-ecs";
 import {Coords, Factory} from "../../utils";
-import {Config} from "../../config";
-import {BombController, BombExplodedMessage} from "../bomb/bomb-controller";
+import {BombExplodedMessage} from "../bomb/bomb-controller";
 import {PlaceBombMessage} from "../player/player-controller";
-import {FlameController} from "../bomb/flame-controller";
+import {FlameController} from "../bomb";
 import {FlameCollisionMessage} from "./flames-collision-watcher";
 import {PlayerKilledMessage} from "./flames-collision-resolver";
 

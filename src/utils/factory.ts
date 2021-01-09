@@ -1,6 +1,6 @@
 import * as ECS from '../../libs/pixi-ecs';
 import {Config} from "../config";
-import {Attrs, Tags, Messages, Assets} from "../constants";
+import {Tags, Assets} from "../constants";
 import {PlayerKeyboardController} from "../component/player";
 import * as PIXI from "pixi.js";
 import {
@@ -10,9 +10,9 @@ import {
     GameManager,
     FlamesCollisionWatcher
 } from "../component/stage";
-import {PlayerBotController} from "../component/player/player-bot-controller";
+import {PlayerBotController} from "../component/player";
 import {Coords, GameLoader} from "./index";
-import {BombController} from "../component/bomb/bomb-controller";
+import {BombController} from "../component/bomb";
 
 class Factory {
     public loadGame(scene: ECS.Scene) {

@@ -8,7 +8,7 @@ export class MusicComponent extends ECS.Component {
     onInit() {
         PIXI_SOUND.play(Assets.MUSIC_INTRO, {
             volume: VOLUME,
-            complete: sound => {
+            complete: _ => {
                 PIXI_SOUND.play(Assets.MUSIC_LOOP, {
                     volume: VOLUME,
                     loop: true,

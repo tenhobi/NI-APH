@@ -1,4 +1,3 @@
-import * as ECS from "../../../libs/pixi-ecs";
 import {PlayerController} from "./player-controller";
 
 class PlayerBotController extends PlayerController {
