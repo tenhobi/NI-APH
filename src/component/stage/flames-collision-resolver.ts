@@ -17,6 +17,7 @@ type PlayerKilledMessage = {
 }
 
 class FlamesCollisionResolver extends ECS.Component {
+    private timers: number[] = [];
     private factory: Factory;
     private powerupHolder: ECS.Container;
 
@@ -34,6 +35,9 @@ class FlamesCollisionResolver extends ECS.Component {
             const {flame, collider} = movePayload;
 
             if (collider.hasTag(Tags.PLAYER)) {
+                console.log("WTFFFFF");
+                console.log("???????");
+                console.log(flame.position, collider.position);
                 this.sendMessage(Messages.PLAYER_KILLED, {
                     player: collider,
                 } as PlayerKilledMessage)
@@ -60,8 +64,20 @@ class FlamesCollisionResolver extends ECS.Component {
             }
 
             if (collider.hasTag(Tags.POWER_UP)) {
-                // TODO
+                collider.removeTag(Tags.POWER_UP);
+                collider.visible = false;
+                this.timers.push(setTimeout(() => collider.destroy(), Config.SAFE_DESTROY));
             }
+        }
+    }
+
+    onDetach() {
+        this.clearTimeouts();
+    }
+
+    public clearTimeouts() {
+        for (let timer of this.timers) {
+            clearTimeout(timer);
         }
     }
 }

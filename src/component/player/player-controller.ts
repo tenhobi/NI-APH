@@ -104,6 +104,9 @@ class PlayerController extends ECS.Component {
             this.playing = this.owner.getAttribute<boolean>(Attrs.PLAYING);
 
             if (this.playing == false) {
+                console.log("==========");
+                console.log("==========");
+                console.log("==========");
                 this.animatedSprite.visible = false;
                 this.timers.push(setTimeout(() => this.owner.destroy(), Config.SAFE_DESTROY));
             }

@@ -68,7 +68,7 @@ class Factory {
     }
 
     public createFlame(scene: ECS.Scene, parent: ECS.Container, coords: Coords) {
-        new ECS.Builder(scene)
+        return new ECS.Builder(scene)
             .localPos(coords.x, coords.y)
             .withName('flame')
             .withTag(Tags.FLAME)
