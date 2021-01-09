@@ -1,4 +1,4 @@
-import PIXI = require("pixi.js");
+import * as PIXI from 'pixi.js';
 
 export class CollisionUtils {
     static hasHorizontalIntersection(boundsA: PIXI.Rectangle, boundsB: PIXI.Rectangle) {

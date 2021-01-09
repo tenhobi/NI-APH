@@ -1,8 +1,7 @@
-import * as ECS from "../../libs/pixi-ecs";
-import {Config} from "../config";
-import {Tags} from "../tags";
-import {PlayerController} from "./player-controller";
-import {TextureUtils} from "../utils";
+import * as ECS from "../../../libs/pixi-ecs";
+import {Config} from "../../config";
+import {Attrs, Tags, Messages} from "../../constants";
+import {Factory} from "../../utils";
 
 class BombController extends ECS.Component {
     private timers: number[] = [];
@@ -35,7 +34,7 @@ class BombController extends ECS.Component {
             .relativePos(0, 0)
             .withName('flame')
             .withTag(Tags.FLAME)
-            .asSprite(TextureUtils.createTexture(2 * Config.TEXTURE_WIDTH, 18 * Config.TEXTURE_HEIGHT, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT))
+            .asSprite(Factory.createTexture(2 * Config.TEXTURE_WIDTH, 18 * Config.TEXTURE_HEIGHT, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT))
             .withParent(this.owner)
             .build();
 

@@ -1,7 +1,9 @@
 import {CollisionUtils} from './collision';
-import {TextureUtils} from "./texture";
+import {Factory} from "./factory";
+import {Coords} from "./types";
 
 export {
     CollisionUtils,
-    TextureUtils,
+    Factory,
+    Coords,
 }

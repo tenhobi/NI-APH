@@ -23,6 +23,13 @@
 - Technical mechanic
     - AI behavior - bot, attacking players, avoiding bombs
 
+## 💣 About
+
+- Stage
+- Player
+- Bomb
+- ... walls, power-ups
+
 ## 📃 License
 
 Licensed under the [MIT License](LICENSE).
