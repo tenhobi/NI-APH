@@ -68,7 +68,6 @@ class Factory {
     }
 
     public createFlame(scene: ECS.Scene, parent: ECS.Container, coords: Coords) {
-        console.log(coords);
         new ECS.Builder(scene)
             .localPos(coords.x, coords.y)
             .withName('flame')
@@ -80,7 +79,6 @@ class Factory {
     }
 
     public createSpeedPowerup(scene: ECS.Scene, parent: ECS.Container, coords: Coords) {
-        console.log(coords);
         new ECS.Builder(scene)
             .localPos(coords.x, coords.y)
             .withName('speed powerup')
@@ -93,7 +91,6 @@ class Factory {
     }
 
     public createBombPowerup(scene: ECS.Scene, parent: ECS.Container, coords: Coords) {
-        console.log(coords);
         new ECS.Builder(scene)
             .localPos(coords.x, coords.y)
             .withName('bomb powerup')

@@ -36,20 +36,28 @@ class FlamesCollisionWatcher extends ECS.Component {
 
         for (let flame of flames) {
             for (let collider of colliders) {
-                const flameBox = flame.getBounds();
-                const cBox = collider.getBounds();
+                try {
+                    const flameBox = flame.getBounds();
+                    const cBox = collider.getBounds();
 
-                const horizontalIntersection = CollisionUtils.hasHorizontalIntersection(flameBox, cBox);
-                const verticalIntersection = CollisionUtils.hasVerticalIntersection(flameBox, cBox);
+                    const horizontalIntersection = CollisionUtils.hasHorizontalIntersection(flameBox, cBox);
+                    const verticalIntersection = CollisionUtils.hasVerticalIntersection(flameBox, cBox);
 
-                const collides = horizontalIntersection > 0 && verticalIntersection > 0;
+                    const collides = horizontalIntersection > 0 && verticalIntersection > 0;
 
-                // Resolve collision.
-                if (collides) {
-                    this.sendMessage(Messages.EXPLOSION_COLLIDED, {
-                        flame: flame,
-                        collider: collider,
-                    } as FlameCollisionMessage);
+                    // Resolve collision.
+                    if (collides) {
+                        this.sendMessage(Messages.EXPLOSION_COLLIDED, {
+                            flame: flame,
+                            collider: collider,
+                        } as FlameCollisionMessage);
+                    }
+                } catch (e) {
+                    console.error("==== ... ===", e);
+                    console.error("==== ... ===", e);
+                    console.error("==== ... ===", e);
+                    console.error("==== ... ===", e);
+                    console.error("==== ... ===", e);
                 }
             }
         }

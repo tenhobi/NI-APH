@@ -6,6 +6,8 @@ class Config {
     static TEXTURE_HEIGHT: number = 16;
     static TEXTURE_SCALE: number = Config.SCENE_WIDTH / ((Config.TEXTURE_WIDTH - 1) * Config.TEXTURE_WIDTH);
 
+    static SAFE_DESTROY: number = 5000;
+
     static BREAKABLE_WALLS_CHANCE: number = 0;
 
     static BOMB_TIMEOUT: number = 2500;

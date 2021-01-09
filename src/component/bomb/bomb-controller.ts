@@ -12,7 +12,7 @@ type BombExplodedMessage = {
 }
 
 class BombController extends ECS.Component {
-    private timer: number;
+    private timers: number[] = [];
     private readonly player: ECS.Container;
     private factory: Factory;
     private bombPower: number;
@@ -25,7 +25,7 @@ class BombController extends ECS.Component {
     onInit() {
         this.factory = new Factory();
         this.bombPower = this.player.getAttribute<number>(Attrs.BOMB_POWER);
-        this.timer = setTimeout(() => this.fireBomb(), Config.BOMB_TIMEOUT + Math.random() * Config.BOMB_TIMEOUT_DEVIATION);
+        this.timers.push(setTimeout(() => this.fireBomb(), Config.BOMB_TIMEOUT + Math.random() * Config.BOMB_TIMEOUT_DEVIATION));
         this.subscribe(Messages.EXPLODE_NOW);
     }
 
@@ -48,7 +48,8 @@ class BombController extends ECS.Component {
             power: this.bombPower,
         } as BombExplodedMessage);
 
-        this.owner.destroy();
+        this.owner.visible = false;
+        this.timers.push(setTimeout(() => this.owner.destroy(), Config.SAFE_DESTROY));
     }
 
     onDetach() {
@@ -56,7 +57,9 @@ class BombController extends ECS.Component {
     }
 
     public clearTimeouts() {
-        clearTimeout(this.timer);
+        for (let timer of this.timers) {
+            clearTimeout(timer);
+        }
     }
 }
 

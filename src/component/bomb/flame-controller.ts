@@ -4,14 +4,13 @@ import {Attrs, Tags, Messages} from "../../constants";
 import {Coords, Factory} from "../../utils";
 
 class FlameController extends ECS.Component {
-    private timer: number;
+    private timers: number[] = [];
     private readonly initialCoords: Coords;
     private readonly power: number;
     private factory: Factory;
 
-    constructor(props: {coords: Coords, power: number}) {
+    constructor(props: { coords: Coords, power: number }) {
         super(null);
-        console.log("....", props);
         this.initialCoords = props.coords;
         this.power = props.power;
     }
@@ -19,7 +18,7 @@ class FlameController extends ECS.Component {
     onInit() {
         this.factory = new Factory();
         this.createFlames();
-        this.timer = setTimeout(() => this.finishFlames(), Config.BOMB_FLAME_LIVING_TIME);
+        this.timers.push(setTimeout(() => this.finishFlames(), Config.BOMB_FLAME_LIVING_TIME));
     }
 
     createFlames() {
@@ -71,7 +70,8 @@ class FlameController extends ECS.Component {
     }
 
     finishFlames() {
-        this.owner.destroy();
+        this.owner.visible = false;
+        this.timers.push(setTimeout(() => this.owner?.destroy(), Config.SAFE_DESTROY));
     }
 
     onDetach() {
@@ -79,7 +79,9 @@ class FlameController extends ECS.Component {
     }
 
     public clearTimeouts() {
-        clearTimeout(this.timer);
+        for (let timer of this.timers) {
+            clearTimeout(timer);
+        }
     }
 }
 

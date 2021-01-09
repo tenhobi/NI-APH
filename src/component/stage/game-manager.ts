@@ -43,8 +43,6 @@ class GameManager extends ECS.Component {
             let payload = msg.data as FlameCollisionMessage;
             let {flame, collider} = payload;
 
-            console.log("===", flame.position);
-
             // TODO
             // - remove dead player
             // victory of player -> send message who, game clear etc.

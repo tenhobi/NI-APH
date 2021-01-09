@@ -3,8 +3,11 @@ import {Attrs, Messages, Tags} from "../../constants";
 import {PlayerMoveMessage} from "../player/player-controller";
 import {CollisionMessage} from "./player-collision-watcher";
 import {Coords} from "../../utils";
+import {Config} from "../../config";
 
 class PlayerCollisionResolver extends ECS.Component {
+    private timers: number[] = [];
+
     onInit() {
         super.onInit();
         this.subscribe(Messages.PLAYER_COLLIDED, Messages.MOVE_PLAYER);
@@ -24,7 +27,9 @@ class PlayerCollisionResolver extends ECS.Component {
             if (collider.hasTag(Tags.POWER_UP_BOMB)) {
                 collider.removeTag(Tags.POWER_UP);
                 collider.removeTag(Tags.POWER_UP_BOMB);
-                collider.destroy();
+
+                collider.visible = false;
+                this.timers.push(setTimeout(() => collider.destroy(), Config.SAFE_DESTROY));
 
                 // TODO: send player bomb ++
             }
@@ -32,10 +37,22 @@ class PlayerCollisionResolver extends ECS.Component {
             if (collider.hasTag(Tags.POWER_UP_SPEED)) {
                 collider.removeTag(Tags.POWER_UP);
                 collider.removeTag(Tags.POWER_UP_SPEED);
-                collider.destroy();
+
+                collider.visible = false;
+                this.timers.push(setTimeout(() => collider.destroy(), Config.SAFE_DESTROY));
 
                 // TODO: send player speed ++
             }
+        }
+    }
+
+    onDetach() {
+        this.clearTimeouts();
+    }
+
+    public clearTimeouts() {
+        for (let timer of this.timers) {
+            clearTimeout(timer);
         }
     }
 }

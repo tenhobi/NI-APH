@@ -4,7 +4,7 @@ import {Config} from "../../config";
 import {Attrs, Messages} from "../../constants";
 import {Coords, Factory} from "../../utils";
 import AnimatedSprite from "../../../libs/pixi-ecs/engine/game-objects/animated-sprite";
-import {BombPlacedMessage} from "../stage/game-manager";
+import {BombExplosionFinishedMessage, BombPlacedMessage} from "../stage/game-manager";
 
 type PlayerMoveMessage = {
     player: ECS.Container,
@@ -17,6 +17,8 @@ type PlaceBombMessage = {
 }
 
 class PlayerController extends ECS.Component {
+    private timers: number[] = [];
+
     private upTextures;
     private rightTextures;
     private downTextures;
@@ -102,7 +104,8 @@ class PlayerController extends ECS.Component {
             this.playing = this.owner.getAttribute<boolean>(Attrs.PLAYING);
 
             if (this.playing == false) {
-                this.animatedSprite.texture.destroy();
+                this.animatedSprite.visible = false;
+                this.timers.push(setTimeout(() => this.owner.destroy(), Config.SAFE_DESTROY));
             }
         }
     }
@@ -188,6 +191,16 @@ class PlayerController extends ECS.Component {
             player: this.owner,
             coords: {x, y},
         } as PlaceBombMessage);
+    }
+
+    onDetach() {
+        this.clearTimeouts();
+    }
+
+    public clearTimeouts() {
+        for (let timer of this.timers) {
+            clearTimeout(timer);
+        }
     }
 }
 
