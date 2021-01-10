@@ -25,10 +25,7 @@
 
 ## 💣 About
 
-- Stage
-- Player
-- Bomb
-- ... walls, power-ups
+![](images/diagram.png)
 
 ## 📃 License
 
