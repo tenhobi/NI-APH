@@ -2,28 +2,15 @@
 
 ## 🚀 How to start
 
-* Clone this repository
+* Clone this repository.
 * Install [Node Package Manager](https://www.npmjs.com)
-* Execute command `npm install` and `npm start`
-* Open `localhost:1234` in your browser
-
-## 💡 Task
-
-- Genre: Arcade
-- Library: PixiJS
-- Space: 2D grid world
-- Objects: animated players, power-ups, blocks
-- Actions
-    - walking, placing bomb, using power-up
-- Rules
-    - Player has 1 weapon: bombs, the effect is performed after some time.
-    - Players spawn randomly.
-    - There is no exit. The goal is to survive as long as possible.
-    - Power-ups are hidden in destructible blocks, they can be extracted by breaking the block but they can also be destroyed by direct explosion.
-- Technical mechanic
-    - AI behavior - bot, attacking players, avoiding bombs
+* Execute command `npm install` and `npm start`.
+* Open `localhost:1234` in your browser.
 
 ## 💣 About
+
+The game is a simple bomberman game, deployed at [aph.tenhobi.dev](https://aph.tenhobi.dev).
+
 
 ![](images/diagram.png)
 

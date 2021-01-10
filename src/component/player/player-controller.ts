@@ -77,8 +77,6 @@ class PlayerController extends ECS.Component {
 
             if (this.owner == player) {
                 this.bombsPlacedCount--;
-                console.log("___ DECREMENT");
-
                 if (this.bombsPlacedCount < 0) {
                     this.bombsPlacedCount = 0;
                 }
@@ -89,8 +87,6 @@ class PlayerController extends ECS.Component {
 
             if (this.owner == player) {
                 this.bombsPlacedCount++;
-                console.log("___ INCREMENT");
-
                 if (this.bombsPlacedCount > this.maxBombCount) {
                     this.bombsPlacedCount = this.maxBombCount;
                 }
@@ -183,7 +179,6 @@ class PlayerController extends ECS.Component {
     }
 
     protected placeBomb() {
-        console.log("BOMBING", this.owner.name, this.bombsPlacedCount, this.maxBombCount);
         if (!this.playing) return;
 
         if (this.bombsPlacedCount >= this.maxBombCount) {
