@@ -24,14 +24,14 @@ class PlayerController extends ECS.Component {
     private downTextures;
     private leftTextures;
 
-    private playing: boolean;
-    private lastPlacedBomb: Coords;
-    private animatedSprite: AnimatedSprite;
-    private maxBombCount: number;
-    private bombsPlacedCount: number;
-    private speed: number;
+    protected playing: boolean;
+    protected lastPlacedBomb: Coords;
+    protected animatedSprite: AnimatedSprite;
+    protected maxBombCount: number;
+    protected bombsPlacedCount: number;
+    protected speed: number;
 
-    private readonly playerNumber: number;
+    protected readonly playerNumber: number;
 
     constructor(player: number) {
         super();
@@ -77,6 +77,7 @@ class PlayerController extends ECS.Component {
 
             if (this.owner == player) {
                 this.bombsPlacedCount--;
+                console.log("___ DECREMENT");
 
                 if (this.bombsPlacedCount < 0) {
                     this.bombsPlacedCount = 0;
@@ -88,6 +89,7 @@ class PlayerController extends ECS.Component {
 
             if (this.owner == player) {
                 this.bombsPlacedCount++;
+                console.log("___ INCREMENT");
 
                 if (this.bombsPlacedCount > this.maxBombCount) {
                     this.bombsPlacedCount = this.maxBombCount;
@@ -181,6 +183,7 @@ class PlayerController extends ECS.Component {
     }
 
     protected placeBomb() {
+        console.log("BOMBING", this.owner.name, this.bombsPlacedCount, this.maxBombCount);
         if (!this.playing) return;
 
         if (this.bombsPlacedCount >= this.maxBombCount) {

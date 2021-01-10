@@ -73,7 +73,7 @@ class Factory {
             }
         }
 
-        for (let i = humanPlayersCount; i < 4; i++) {
+        for (let i = humanPlayersCount; i < humanPlayersCount + 1; i++) { // TODO: 4
             let index = Math.floor(Math.random() * Math.floor(players.length));
             let avatar = players[index];
             players = players.filter(item => item != avatar);

@@ -1,4 +1,4 @@
-import * as ECS from "../../../libs/pixi-ecs";
+ import * as ECS from "../../../libs/pixi-ecs";
 import {Config} from "../../config";
 import {Attrs, Tags, Messages} from "../../constants";
 import {Coords, Factory} from "../../utils";
