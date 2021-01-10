@@ -131,7 +131,7 @@ class PlayerBotController extends PlayerController {
         }
 
         if (dangerFlag) {
-            let nextCellToSafeCell = this.closestSafeCoordsPath(this.positionToCoords(this.owner.position));
+            let nextCellToSafeCell = this.closestSafeCoordsPath(null);
             this.plan = PlanType.MOVE;
             this.planCoords = nextCellToSafeCell;
             return true;
