@@ -1,8 +1,7 @@
 import * as ECS from "../../../libs/pixi-ecs";
-import {Attrs, Messages, Tags} from "../../constants";
-import {CollisionUtils, Coords} from "../../utils";
-import {PlayerMoveMessage} from "../player/player-controller";
-import {BombExplosionFinishedMessage} from "./game-manager";
+import {Messages, Tags} from "../../constants";
+import {CollisionUtils} from "../../utils";
+import {BombExplosionFinishedMessage} from "./in-game-manager";
 
 type FlameCollisionMessage = {
     flame: ECS.Container,
@@ -26,7 +25,6 @@ class FlamesCollisionWatcher extends ECS.Component {
 
     protected checkCollisions() {
         const flames = this.scene.findObjectsByTag(Tags.FLAME);
-
         const players = this.scene.findObjectsByTag(Tags.PLAYER);
         const breakableWalls = this.scene.findObjectsByTag(Tags.BREAKABLE_WALL);
         const powerups = this.scene.findObjectsByTag(Tags.POWER_UP);
@@ -46,8 +44,6 @@ class FlamesCollisionWatcher extends ECS.Component {
 
                 // Resolve collision.
                 if (collides) {
-                    console.log("flame", flame);
-                    console.log("collider", collider);
                     this.sendMessage(Messages.EXPLOSION_COLLIDED, {
                         flame: flame,
                         collider: collider,

@@ -1,10 +1,21 @@
 import * as ECS from '../libs/pixi-ecs';
-import {MusicComponent} from './component/stage/music-component';
+import {MusicComponent} from './component/stage';
 import {Config} from "./config";
-import {Attrs, Tags, Messages, Assets} from "./constants";
+import {Attrs, Assets, Tags} from "./constants";
+import {
+    FlamesCollisionResolver,
+    FlamesCollisionWatcher,
+    InGameManager,
+    PlayerCollisionResolver,
+    PlayerCollisionWatcher
+} from "./component/stage";
+import {Game} from "./component/stage";
+import {MenuManager} from "./menu/menu-manager";
 import {Factory} from "./utils";
+import * as PIXI from "pixi.js";
+import {MenuItem} from "./menu/menu-item";
 
-class Game {
+class Main {
     engine: ECS.Engine;
 
     constructor() {
@@ -16,6 +27,7 @@ class Game {
             height: canvas.height,
             resolution: canvas.width / Config.SCENE_WIDTH,
             resizeToScreen: true,
+            backgroundColor: 0xaaaaaa,
         });
 
         const sceneHeight = Config.SCENE_WIDTH / (this.engine.app.view.width / this.engine.app.view.height);
@@ -32,8 +44,11 @@ class Game {
     }
 
     loadGame() {
-        new Factory().loadGame(this.engine.scene);
+        let factory = new Factory();
+        let game = factory.createGame(this.engine.scene);
+        let menu = factory.createMenu(this.engine.scene);
+        this.engine.scene.addGlobalComponent(new Game());
     }
 }
 
-export default new Game();
+export default new Main();

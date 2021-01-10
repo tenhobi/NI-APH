@@ -7,19 +7,41 @@ import {
     PlayerCollisionWatcher,
     PlayerCollisionResolver,
     FlamesCollisionResolver,
-    GameManager,
-    FlamesCollisionWatcher
+    InGameManager,
+    FlamesCollisionWatcher,
 } from "../component/stage";
 import {PlayerBotController} from "../component/player";
 import {Coords, GameLoader} from "./index";
 import {BombController} from "../component/bomb";
+import {MenuManager} from "../menu";
 
 class Factory {
-    public loadGame(scene: ECS.Scene) {
+    public createGame(scene: ECS.Scene) {
+        return new ECS.Builder(scene)
+            .withName('game')
+            .withParent(scene.stage)
+            .withComponent(new InGameManager())
+            .withComponent(new PlayerCollisionWatcher())
+            .withComponent(new PlayerCollisionResolver())
+            .withComponent(new FlamesCollisionWatcher())
+            .withComponent(new FlamesCollisionResolver())
+            .build();
+    }
+
+    public createMenu(scene: ECS.Scene) {
+        return new ECS.Builder(scene)
+            .withName('menu')
+            .withParent(scene.stage)
+            .withComponent(new MenuManager())
+            .build();
+    }
+
+    public loadGame(scene: ECS.Scene, humanPlayersCount: number, pst: number) {
         let arena = new ECS.Container('arena');
+        arena.addTag(Tags.ARENA);
         scene.stage.addChild(arena);
 
-        let loader = new GameLoader();
+        let loader = new GameLoader(pst);
         loader.generateMap(arena, this);
 
         let powerupHolder = new ECS.Container('powerup holder');
@@ -30,17 +52,34 @@ class Factory {
         bombHolder.addTag(Tags.BOMB_HOLDER);
         arena.addChild(bombHolder);
 
-        // TODO
-        this.createPlayerGO(true, arena.scene, 1, 1, 0);
-        this.createPlayerGO(true, arena.scene, 2, 1, 1, Config.KEY2_UP, Config.KEY2_RIGHT, Config.KEY2_DOWN, Config.KEY2_LEFT, Config.KEY2_BOMB);
-        this.createPlayerGO(false, arena.scene, 1, Config.SCENE_WIDTH - 2, 2, Config.KEY2_UP, Config.KEY2_RIGHT, Config.KEY2_DOWN, Config.KEY2_LEFT, Config.KEY2_BOMB);
-        this.createPlayerGO(false, arena.scene, Config.SCENE_WIDTH - 2, 1, 3);
+        let players = [0, 1, 2, 3];
 
-        scene.addGlobalComponent(new GameManager());
-        scene.addGlobalComponent(new PlayerCollisionWatcher());
-        scene.addGlobalComponent(new PlayerCollisionResolver());
-        scene.addGlobalComponent(new FlamesCollisionWatcher());
-        scene.addGlobalComponent(new FlamesCollisionResolver());
+        let playersCoords = new Map([
+                [0, [1, 1]],
+                [1, [Config.SCENE_WIDTH - 2, 1]],
+                [2, [1, Config.SCENE_WIDTH - 2]],
+                [3, [Config.SCENE_WIDTH - 2, Config.SCENE_WIDTH - 2]],
+            ]);
+
+        for (let i = 0; i < humanPlayersCount; i++) {
+            let index = Math.floor(Math.random() * Math.floor(players.length));
+            let avatar = players[index];
+            players = players.filter(item => item != avatar);
+
+            if (i == 0) {
+                this.createPlayerGO(true, arena.scene, arena, playersCoords.get(avatar)[0], playersCoords.get(avatar)[1], avatar);
+            } else {
+                this.createPlayerGO(true, arena.scene, arena, playersCoords.get(avatar)[0], playersCoords.get(avatar)[1], avatar, Config.KEY2_UP, Config.KEY2_RIGHT, Config.KEY2_DOWN, Config.KEY2_LEFT, Config.KEY2_BOMB);
+            }
+        }
+
+        for (let i = humanPlayersCount; i < 4; i++) {
+            let index = Math.floor(Math.random() * Math.floor(players.length));
+            let avatar = players[index];
+            players = players.filter(item => item != avatar);
+
+            this.createPlayerGO(false, arena.scene, arena, playersCoords.get(avatar)[0], playersCoords.get(avatar)[1], avatar);
+        }
     }
 
     /// --- GO
@@ -83,7 +122,7 @@ class Factory {
             .localPos(coords.x, coords.y)
             .withName('speed powerup')
             .withTag(Tags.POWER_UP)
-            .withTag(Tags.POWER_UP_SPEED)
+            .withTag(Tags.POWER_UP_POWER)
             .asSprite(this.createTexture(14 * Config.TEXTURE_WIDTH, 16 * Config.TEXTURE_HEIGHT, Config.TEXTURE_WIDTH, Config.TEXTURE_HEIGHT))
             .withParent(parent)
             .scale(Config.TEXTURE_SCALE)
@@ -102,15 +141,15 @@ class Factory {
             .build();
     }
 
-    public createPlayerGO(humanPlayer: boolean, scene: ECS.Scene, posX: number, posY: number, player: number = 0, keyUp = Config.KEY_UP, keyRight = Config.KEY_RIGHT, keyDown = Config.KEY_DOWN, keyLeft = Config.KEY_LEFT, keySpace = Config.KEY_BOMB) {
+    public createPlayerGO(humanPlayer: boolean, scene: ECS.Scene, parent: ECS.Container, posX: number, posY: number, player: number = 0, keyUp = Config.KEY_UP, keyRight = Config.KEY_RIGHT, keyDown = Config.KEY_DOWN, keyLeft = Config.KEY_LEFT, keySpace = Config.KEY_BOMB) {
         new ECS.Builder(scene)
-            .withName("player " + player)
+            .withName((humanPlayer ? "player " : "bot ") + player)
             .asAnimatedSprite(this.createPlayerTexturesStanding(player))
             .localPos(posX + Config.TEXTURE_SCALE, posY + Config.TEXTURE_SCALE)
             .withTag(Tags.PLAYER)
-            .withParent(scene.stage)
+            .withParent(parent)
             .withComponent(humanPlayer ? new PlayerKeyboardController(player, keyUp, keyRight, keyDown, keyLeft, keySpace) : new PlayerBotController(player))
-            .scale(Config.TEXTURE_SCALE * 3 / 4)
+            .scale(Config.TEXTURE_SCALE * 3 / 5)
             .build();
     }
 

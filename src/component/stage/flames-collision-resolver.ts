@@ -1,12 +1,9 @@
 import * as ECS from "../../../libs/pixi-ecs";
-import {Attrs, Messages, Tags} from "../../constants";
-import {PlayerMoveMessage} from "../player/player-controller";
-import {CollisionMessage} from "./player-collision-watcher";
-import {Coords, Factory} from "../../utils";
+import {Messages, Tags} from "../../constants";
+import {Factory} from "../../utils";
 import {FlameCollisionMessage} from "./flames-collision-watcher";
 import {Sprite} from "../../../libs/pixi-ecs";
 import {Config} from "../../config";
-import {BombPlacedMessage} from "./game-manager";
 
 type ExplodeNowMessage = {
     bomb: ECS.Container,
@@ -19,12 +16,11 @@ type PlayerKilledMessage = {
 class FlamesCollisionResolver extends ECS.Component {
     private timers: number[] = [];
     private factory: Factory;
-    private powerupHolder: ECS.Container;
 
     onInit() {
         super.onInit();
         this.factory = new Factory();
-        this.powerupHolder = this.scene.findObjectByTag(Tags.POWER_UP_HOLDER);
+
 
         this.subscribe(Messages.EXPLOSION_COLLIDED);
     }
@@ -35,9 +31,6 @@ class FlamesCollisionResolver extends ECS.Component {
             const {flame, collider} = movePayload;
 
             if (collider.hasTag(Tags.PLAYER)) {
-                console.log("WTFFFFF");
-                console.log("???????");
-                console.log(flame.position, collider.position);
                 this.sendMessage(Messages.PLAYER_KILLED, {
                     player: collider,
                 } as PlayerKilledMessage)
@@ -48,11 +41,13 @@ class FlamesCollisionResolver extends ECS.Component {
                 collider.removeTag(Tags.BREAKABLE_WALL);
                 collider.addTag(Tags.EMPTY);
 
+                let powerupHolder = this.scene.findObjectByTag(Tags.POWER_UP_HOLDER);
+
                 if (Math.random() < 0.3) {
-                    this.factory.createSpeedPowerup(this.powerupHolder.scene, this.powerupHolder, {x: collider.x, y: collider.y});
+                    this.factory.createSpeedPowerup(powerupHolder.scene, powerupHolder, {x: collider.x, y: collider.y});
                 } else {
                     if (Math.random() < 0.3) {
-                        this.factory.createBombPowerup(this.powerupHolder.scene, this.powerupHolder, {x: collider.x, y: collider.y});
+                        this.factory.createBombPowerup(powerupHolder.scene, powerupHolder, {x: collider.x, y: collider.y});
                     }
                 }
             }

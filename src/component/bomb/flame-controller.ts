@@ -37,7 +37,7 @@ class FlameController extends ECS.Component {
             this.flames.push(this.factory.createFlame(this.owner.scene, this.owner, coords));
 
             if (power > 1) {
-                this.createFlameRecursion({x: coords.x + vector.x, y: coords.y + vector.y}, vector, power);
+                this.createFlameRecursion({x: coords.x + vector.x, y: coords.y + vector.y}, vector, power - 1);
             }
         }
 

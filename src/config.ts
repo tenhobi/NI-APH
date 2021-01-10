@@ -6,9 +6,7 @@ class Config {
     static TEXTURE_HEIGHT: number = 16;
     static TEXTURE_SCALE: number = Config.SCENE_WIDTH / ((Config.TEXTURE_WIDTH - 1) * Config.TEXTURE_WIDTH);
 
-    static SAFE_DESTROY: number = 5000;
-
-    static BREAKABLE_WALLS_CHANCE: number = 0;
+    static SAFE_DESTROY: number = 1500;
 
     static BOMB_TIMEOUT: number = 2500;
     static BOMB_TIMEOUT_DEVIATION: number = 500;
@@ -29,6 +27,12 @@ class Config {
     static KEY2_DOWN = ECS.Keys.KEY_S;
     static KEY2_LEFT = ECS.Keys.KEY_A;
     static KEY2_BOMB = ECS.Keys.KEY_G;
+
+    static TEXT_TITLE = "BOMBER F*ING MAN";
+    static TEXT_PLAYERS = "Počet lidských hráčů";
+    static TEXT_PST = "Pravděpodobnost krabic";
+    static TEXT_ENTER_GAME = "Stiskněte ENTER";
+    static TEXT_WINNER = "Výherce poslední hry";
 }
 
 export {

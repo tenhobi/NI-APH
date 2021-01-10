@@ -5,6 +5,12 @@ import * as PIXI from "pixi.js";
 import {Factory} from "./factory";
 
 class GameLoader {
+    private boxPst: number;
+
+    constructor(boxPst: number) {
+        this.boxPst = boxPst;
+    }
+
     public generateMap(arena: ECS.Container, factory: Factory) {
         // Generate map.
         for (let x = 0; x < Config.SCENE_WIDTH; x++) {
@@ -44,7 +50,7 @@ class GameLoader {
 
         // Add breakable walls.
         for (let emptyCell of arena.scene.findObjectsByTag(Tags.EMPTY)) {
-            if (Math.random() > Config.BREAKABLE_WALLS_CHANCE) {
+            if (Math.random() < this.boxPst) {
                 if (GameLoader.isCellOnPlayerSpawner(emptyCell))
                     continue;
 

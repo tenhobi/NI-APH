@@ -4,7 +4,7 @@ import {Config} from "../../config";
 import {Attrs, Messages} from "../../constants";
 import {Coords, Factory} from "../../utils";
 import AnimatedSprite from "../../../libs/pixi-ecs/engine/game-objects/animated-sprite";
-import {BombExplosionFinishedMessage, BombPlacedMessage} from "../stage/game-manager";
+import {BombExplosionFinishedMessage, BombPlacedMessage} from "../stage/in-game-manager";
 
 type PlayerMoveMessage = {
     player: ECS.Container,
@@ -28,7 +28,8 @@ class PlayerController extends ECS.Component {
     private lastPlacedBomb: Coords;
     private animatedSprite: AnimatedSprite;
     private maxBombCount: number;
-    private bombsLeftCount: number;
+    private bombsPlacedCount: number;
+    private speed: number;
 
     private readonly playerNumber: number;
 
@@ -50,14 +51,19 @@ class PlayerController extends ECS.Component {
         this.downTextures = factory.createPlayerTexturesDown(this.playerNumber);
         this.leftTextures = factory.createPlayerTexturesLeft(this.playerNumber);
 
-        this.maxBombCount = Config.BOMB_DEFAULT_COUNT;
-        this.bombsLeftCount = this.maxBombCount;
+        this.speed = Config.PLAYER_SPEED;
 
         this.owner.assignAttribute(Attrs.BOMB_POWER, Config.BOMB_POWER)
-        this.owner.assignAttribute(Attrs.SPEED, Config.PLAYER_SPEED);
+
+        this.owner.assignAttribute(Attrs.BOMB_COUNT, Config.BOMB_DEFAULT_COUNT);
+        this.maxBombCount = Config.BOMB_DEFAULT_COUNT;
+        this.bombsPlacedCount = 0;
+
         this.owner.assignAttribute(Attrs.PLAYER_Y, this.owner.position.y);
         this.owner.assignAttribute(Attrs.PLAYER_X, this.owner.position.x);
+
         this.owner.assignAttribute(Attrs.LAST_PLAYER_BOMB, null);
+
         this.owner.assignAttribute(Attrs.PLAYING, true);
         this.playing = true;
 
@@ -67,28 +73,24 @@ class PlayerController extends ECS.Component {
     onMessage(msg: Message): any {
         if (msg.action == Messages.BOMB_EXPLOSION_FINISHED) {
             let payload = msg.data as BombExplosionFinishedMessage;
-            let { player } = payload;
+            let {player} = payload;
 
             if (this.owner == player) {
-                this.bombsLeftCount++;
+                this.bombsPlacedCount--;
 
-                console.log("__ INCREMENT");
-
-                if (this.bombsLeftCount > this.maxBombCount) {
-                    this.bombsLeftCount = this.maxBombCount;
+                if (this.bombsPlacedCount < 0) {
+                    this.bombsPlacedCount = 0;
                 }
             }
         } else if (msg.action == Messages.BOMB_PLACED) {
             let payload = msg.data as BombPlacedMessage;
-            let { player } = payload;
+            let {player} = payload;
 
             if (this.owner == player) {
-                this.bombsLeftCount--;
+                this.bombsPlacedCount++;
 
-                console.log("__ DECREMENT");
-
-                if (this.bombsLeftCount < 0) {
-                    this.bombsLeftCount = 0;
+                if (this.bombsPlacedCount > this.maxBombCount) {
+                    this.bombsPlacedCount = this.maxBombCount;
                 }
             }
         }
@@ -98,15 +100,13 @@ class PlayerController extends ECS.Component {
         super.onUpdate(delta, absolute);
 
         if (this.playing) {
+            this.maxBombCount = this.owner.getAttribute<number>(Attrs.BOMB_COUNT);
             this.owner.position.y = this.owner.getAttribute<number>(Attrs.PLAYER_Y);
             this.owner.position.x = this.owner.getAttribute<number>(Attrs.PLAYER_X);
             this.lastPlacedBomb = this.owner.getAttribute<Coords>(Attrs.LAST_PLAYER_BOMB);
             this.playing = this.owner.getAttribute<boolean>(Attrs.PLAYING);
 
             if (this.playing == false) {
-                console.log("==========");
-                console.log("==========");
-                console.log("==========");
                 this.animatedSprite.visible = false;
                 this.timers.push(setTimeout(() => this.owner.destroy(), Config.SAFE_DESTROY));
             }
@@ -121,7 +121,7 @@ class PlayerController extends ECS.Component {
             this.animatedSprite.play();
         }
         const futurePositionBounds = this.owner.getBounds().clone();
-        futurePositionBounds.x -= delta * this.owner.getAttribute<number>(Attrs.SPEED);
+        futurePositionBounds.x -= delta * this.speed;
 
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
@@ -138,7 +138,7 @@ class PlayerController extends ECS.Component {
         }
 
         const futurePositionBounds = this.owner.getBounds().clone();
-        futurePositionBounds.x += delta * this.owner.getAttribute<number>(Attrs.SPEED);
+        futurePositionBounds.x += delta * this.speed;
 
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
@@ -155,7 +155,7 @@ class PlayerController extends ECS.Component {
         }
 
         const futurePositionBounds = this.owner.getBounds().clone();
-        futurePositionBounds.y -= delta * this.owner.getAttribute<number>(Attrs.SPEED);
+        futurePositionBounds.y -= delta * this.speed;
 
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
@@ -172,7 +172,7 @@ class PlayerController extends ECS.Component {
         }
 
         const futurePositionBounds = this.owner.getBounds().clone();
-        futurePositionBounds.y += delta * this.owner.getAttribute<number>(Attrs.SPEED);
+        futurePositionBounds.y += delta * this.speed;
 
         this.sendMessage(Messages.PLAYER_WANTS_TO_MOVE, {
             player: this.owner,
@@ -183,7 +183,7 @@ class PlayerController extends ECS.Component {
     protected placeBomb() {
         if (!this.playing) return;
 
-        if (this.bombsLeftCount <= 0) {
+        if (this.bombsPlacedCount >= this.maxBombCount) {
             return;
         }
 

@@ -35,6 +35,7 @@ class BombController extends ECS.Component {
             let {bomb} = payload;
 
             if (bomb == this.owner) {
+                this.clearTimeouts();
                 this.fireBomb();
             }
         }

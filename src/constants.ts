@@ -1,6 +1,6 @@
 enum Attrs {
-    SPEED = "player_speed",
-    BOMB_POWER = "bomb_power",
+    BOMB_COUNT = "BOMB_COUNT",
+    BOMB_POWER = "BOMB_POWER",
     PLAYER_Y = "PLAYER_Y",
     PLAYER_X = "PLAYER_X",
     LAST_PLAYER_BOMB = "LAST_PLAYER_BOMB",
@@ -10,6 +10,9 @@ enum Attrs {
 }
 
 enum Messages {
+    START_GAME = "START_GAME",
+    START_MENU = "START_MENU",
+
     BOMB_PLACE = 'BOMB_PLACE', // player wants to place a bomb
     BOMB_PLACED = 'BOMB_PLACED', // game manager placed the bomb
     BOMB_EXPLODED = 'BOMB_EXPLODED', // bomb exploded, make flames
@@ -36,8 +39,10 @@ enum Tags {
 
     POWER_UP_HOLDER = "POWER_UP_HOLDER",
     POWER_UP = "POWER_UP",
-    POWER_UP_SPEED = "POWER_UP_SPEED",
+    POWER_UP_POWER = "POWER_UP_POWER",
     POWER_UP_BOMB = "POWER_UP_BOMB",
+
+    ARENA = "ARENA",
 }
 
 enum Assets {

@@ -30,17 +30,17 @@ class PlayerCollisionResolver extends ECS.Component {
                 collider.visible = false;
                 this.timers.push(setTimeout(() => collider.destroy(), Config.SAFE_DESTROY));
 
-                // TODO: send player bomb ++
+                player.assignAttribute(Attrs.BOMB_COUNT, player.getAttribute<number>(Attrs.BOMB_COUNT) + 1);
             }
 
-            if (collider.hasTag(Tags.POWER_UP_SPEED)) {
+            if (collider.hasTag(Tags.POWER_UP_POWER)) {
                 collider.removeTag(Tags.POWER_UP);
-                collider.removeTag(Tags.POWER_UP_SPEED);
+                collider.removeTag(Tags.POWER_UP_POWER);
 
                 collider.visible = false;
                 this.timers.push(setTimeout(() => collider.destroy(), Config.SAFE_DESTROY));
 
-                // TODO: send player speed ++
+                player.assignAttribute(Attrs.BOMB_POWER, player.getAttribute<number>(Attrs.BOMB_POWER) + 1);
             }
         }
     }
