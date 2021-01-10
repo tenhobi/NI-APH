@@ -1,7 +1,6 @@
 # Bomber f*ing man
 
 The game is a simple oldschoolish bomberman game, deployed at [aph.tenhobi.dev](https://aph.tenhobi.dev).
-It uses PIXI.js and ECS engine.
 
 ### How to start
 
@@ -22,6 +21,15 @@ For example, components `PlayerCollisionWatcher` watches moving intend and infor
 In the diagram below, you can see the structure of game objects, their components and attributes.
 
 ![](images/diagram.png)
+
+The game is written using PIXI.js and ECS engine.
+It was the first time I were making a game with these technologies,
+but overall the component architecture with messaging pattern proved great.
+
+The game has multiple ways how to improve it even more,
+namely better UI (tho I find this oldschoolish UI quite nostalgic),
+better or another type of bots,
+another power ups etc.
 
 ### Manual
 
