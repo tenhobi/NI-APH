@@ -15,6 +15,9 @@ class Config {
     static BOMB_POWER: number = 1;
 
     static PLAYER_SPEED: number = 0.005;
+    static PLAYERS_COUNT: number = 3;
+
+    static PIXEL_EDGE: number = 0.07;
 
     static KEY_UP = ECS.Keys.KEY_UP;
     static KEY_RIGHT = ECS.Keys.KEY_RIGHT;
