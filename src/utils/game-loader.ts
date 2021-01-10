@@ -5,7 +5,7 @@ import * as PIXI from "pixi.js";
 import {Factory} from "./factory";
 
 class GameLoader {
-    private boxPst: number;
+    private readonly boxPst: number;
 
     constructor(boxPst: number) {
         this.boxPst = boxPst;

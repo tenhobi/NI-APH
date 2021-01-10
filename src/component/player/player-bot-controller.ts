@@ -1,9 +1,6 @@
 import {PlayerController} from "./player-controller";
 import {Coords} from "../../utils";
-import {Messages, Tags} from "../../constants";
-import * as ECS from "../../../libs/pixi-ecs";
-import {Message} from "../../../libs/pixi-ecs";
-import {CollisionMessage} from "../stage/player-collision-watcher";
+import {Tags} from "../../constants";
 import {Config} from "../../config";
 
 type QueueBFS = {
@@ -37,6 +34,7 @@ class PlayerBotController extends PlayerController {
 
     private plan: PlanType;
     private planCoords: Coords;
+    private endGame: boolean;
 
     constructor(player: number = 0) {
         super(player);
@@ -45,30 +43,7 @@ class PlayerBotController extends PlayerController {
     onInit() {
         super.onInit();
         this.planInterval = setInterval(() => this.makePlan(), 100);
-        this.subscribe(Messages.PLAYER_COLLIDED);
-    }
-
-    onMessage(msg: Message): any {
-        super.onMessage(msg);
-
-        if (msg.action == Messages.PLAYER_COLLIDED) {
-            // let payload = msg.data as CollisionMessage;
-            // let {player} = payload;
-            // if (player == this.owner) {
-            //     console.log("BOT COLLISION");
-            //
-            //     if (this.plan == PlanType.PLANT) {
-            //         let myPosInt = this.positionToCoords(this.owner.position);
-            //         let cellToPlaceInt = this.positionToCoords(this.planCoords);
-            //
-            //         if (myPosInt.x == cellToPlaceInt.x && myPosInt.y == cellToPlaceInt.y) {
-            //             this.placeBomb();
-            //             this.plan = null;
-            //             console.info("NO PLAN 1");
-            //         }
-            //     }
-            // }
-        }
+        this.endGame = false;
     }
 
     onUpdate(delta: number, absolute: number) {
@@ -78,28 +53,35 @@ class PlayerBotController extends PlayerController {
             return;
         }
 
-        if (this.isPlanFinished()) {
-            console.warn("I AM WAITING", this.plan);
+        if (this.endGame) {
+            if (this.plan == PlanType.MOVE) {
+                this.botMoveTo(delta, this.planCoords);
+            }
+        }
+
+
+        if (this.isPlanFinished() || this.endGame) {
             if (this.plan == PlanType.PLANT) {
-                console.log("placing bomb", this.bombsPlacedCount, this.maxBombCount);
-                this.placeBomb();
+                if (this.canPlaceBombAndNotDie()) {
+                    this.placeBomb();
+                }
             }
             this.plan = null;
-            console.info("NO PLAN 2");
         } else {
             this.botMoveTo(delta, this.planCoords);
         }
     }
 
     makePlan() {
-        console.log("MAKE PLAN", this.owner.name);
-
         if (this.bombsAroundPlan()) return;
 
         if (this.plan != null) return;
 
         if (this.boxesAroundPlan()) return;
-        // if (this.endGamePlan()) return;
+
+        if (this.plan != null) return;
+
+        if (this.endGamePlan()) return;
     }
 
     isPlanFinished(): boolean {
@@ -113,12 +95,8 @@ class PlayerBotController extends PlayerController {
             let planCoords = this.positionToCoords(this.planCoords);
 
             if (myCoords.x == planCoords.x && myCoords.y == planCoords.y) {
-                console.warn("FINISH PLAN?", planCoords, this.owner.position);
                 if (planCoords.x + Config.PIXEL_EDGE > this.owner.position.x && planCoords.y + Config.PIXEL_EDGE > this.owner.position.y) {
-                    console.warn("FINISH MOVE");
                     return true;
-                } else {
-                    console.log("NOT YET FULLY THERE");
                 }
             }
         } else if (this.plan == PlanType.PLANT) {
@@ -142,7 +120,6 @@ class PlayerBotController extends PlayerController {
 
     // Run from bombs.
     bombsAroundPlan(): boolean {
-        console.log("^ starting BOMBS AROUND");
         let bombs = this.scene.findObjectsByTag(Tags.BOMB);
 
         let dangerFlag = false;
@@ -154,10 +131,9 @@ class PlayerBotController extends PlayerController {
         }
 
         if (dangerFlag) {
-            let nextCellToSafeCell = this.closestSafeCoordsPath();
+            let nextCellToSafeCell = this.closestSafeCoordsPath(this.positionToCoords(this.owner.position));
             this.plan = PlanType.MOVE;
             this.planCoords = nextCellToSafeCell;
-            console.log("== bombsAroundPlan", nextCellToSafeCell);
             return true;
         }
 
@@ -166,7 +142,6 @@ class PlayerBotController extends PlayerController {
 
     // Destroy boxes.
     boxesAroundPlan(): boolean {
-        console.log("^ starting DESTROY BOXES AROUND");
         let boxes = this.scene.findObjectsByTag(Tags.BREAKABLE_WALL);
 
         if (boxes.length > 0) {
@@ -182,15 +157,14 @@ class PlayerBotController extends PlayerController {
 
             if (isABoxFlag) {
                 this.plan = PlanType.PLANT;
-                console.log("xx PLANT");
             } else {
                 this.plan = PlanType.MOVE;
-                console.log("xx MOVE");
             }
 
             this.planCoords = nextCoords;
-            console.log("== boxesAroundPlan", this.plan == 0 ? "MOVE" : "PLANT", this.owner.position, this.planCoords);
             return true;
+        } else {
+            this.endGame = true;
         }
 
         return false;
@@ -198,31 +172,28 @@ class PlayerBotController extends PlayerController {
 
     // Do troubles.
     endGamePlan(): boolean {
-        return false;
+        this.plan = PlanType.PLANT;
+        this.planCoords = this.owner.position;
+        return true;
     }
 
     botMoveTo(delta: number, coords: Coords) {
-        console.log("=> Moving from ", this.owner.position, " to ", coords);
-
         let myCoords = this.owner.position;
         let myCoordsInt = this.positionToCoords(this.owner.position);
-        let coordsInt = this.positionToCoords(coords) ;
+        let coordsInt = this.positionToCoords(coords);
         if (this.isStraightPathBetween(myCoords, coords)) {
             // On the cell with X, center the player.
             if (myCoordsInt.x == coordsInt.x) {
                 if (myCoords.x > coordsInt.x + Config.PIXEL_EDGE) {
                     this.moveLeft(delta);
-                    console.log("LEFT 1");
                 }
             }
             // Not yet on the cell with X.
             else {
                 if (myCoordsInt.x < coordsInt.x) {
                     this.moveRight(delta);
-                    console.log("RIGHT 2");
                 } else {
                     this.moveLeft(delta);
-                    console.log("LEFT 2");
                 }
             }
 
@@ -230,35 +201,22 @@ class PlayerBotController extends PlayerController {
             if (myCoordsInt.y == coordsInt.y) {
                 if (myCoords.y > coordsInt.y + Config.PIXEL_EDGE) {
                     this.moveUp(delta);
-                    console.log("UP 1");
                 }
             }
             // Not yet on the cell with Y.
             else {
                 if (myCoordsInt.y < coordsInt.y) {
                     this.moveDown(delta);
-                    console.log("DOWN 2");
                 } else {
                     this.moveUp(delta);
-                    console.log("UP 2");
                 }
             }
-
-            console.log("- finished move");
         } else {
-            console.warn("SHOULD NOT HAPPEN");
-            // let cellSteps = this.cellStepsToCoord(coords);
-            // if (cellSteps != null) {
-            //     console.log("... ... moving to crossover", cellSteps);
-            //     this.plan = PlanType.MOVE;
-            //     this.planCoords = cellSteps;
-            // } else {
-            //     console.error("!! SHIT, gonna die :(");
-            // }
+            this.plan = null;
         }
     }
 
-    closestSafeCoordsPath(): Coords {
+    closestSafeCoordsPath(additionalBomb: Coords): Coords {
         let emptyCells = this.scene.findObjectsByTag(Tags.EMPTY);
         let bombs = this.scene.findObjectsByTag(Tags.BOMB);
 
@@ -276,6 +234,11 @@ class PlayerBotController extends PlayerController {
                     isOKFlag = false;
                 }
             }
+            if (additionalBomb != null) {
+                if (this.isStraightPathBetween(cell.position, additionalBomb)) {
+                    isOKFlag = false;
+                }
+            }
 
             if (isOKFlag) {
                 safeCells[cell.y][cell.x] = 0;
@@ -287,8 +250,9 @@ class PlayerBotController extends PlayerController {
         for (let bomb of bombs) {
             safeCells[bomb.y][bomb.x] = -2;
         }
-
-        console.log("** ", safeCells);
+        if (additionalBomb != null) {
+            safeCells[additionalBomb.y][additionalBomb.x] = -2;
+        }
 
         // BFS
         let myCoords = this.positionToCoords(this.owner.position);
@@ -341,18 +305,17 @@ class PlayerBotController extends PlayerController {
                 let currentDirection = safeCells[targetCoords.y][targetCoords.x];
 
                 if (currentDirection == -3) {
-                    console.log("** ", lastTargetCoords);
                     return lastTargetCoords;
                 }
 
                 lastTargetCoords = targetCoords;
                 if (currentDirection == 1) {
                     targetCoords = {x: targetCoords.x, y: targetCoords.y - 1};
-                } else if (currentDirection == 2 ) {
+                } else if (currentDirection == 2) {
                     targetCoords = {x: targetCoords.x + 1, y: targetCoords.y};
-                } else if (currentDirection == 3 ) {
+                } else if (currentDirection == 3) {
                     targetCoords = {x: targetCoords.x, y: targetCoords.y + 1};
-                } else if (currentDirection == 4 ) {
+                } else if (currentDirection == 4) {
                     targetCoords = {x: targetCoords.x - 1, y: targetCoords.y};
                 }
             }
@@ -427,26 +390,23 @@ class PlayerBotController extends PlayerController {
             }
         }
 
-        console.log("** ", cellsMap);
-
         let lastTargetCoords: Coords = targetCoords;
         if (targetCoords != null) {
             while (true) {
                 let currentDirection = cellsMap[targetCoords.y][targetCoords.x];
 
                 if (currentDirection == -3) {
-                    console.log("** ", lastTargetCoords);
                     return lastTargetCoords;
                 }
 
                 lastTargetCoords = targetCoords;
                 if (currentDirection == 1) {
                     targetCoords = {x: targetCoords.x, y: targetCoords.y - 1};
-                } else if (currentDirection == 2 ) {
+                } else if (currentDirection == 2) {
                     targetCoords = {x: targetCoords.x + 1, y: targetCoords.y};
-                } else if (currentDirection == 3 ) {
+                } else if (currentDirection == 3) {
                     targetCoords = {x: targetCoords.x, y: targetCoords.y + 1};
-                } else if (currentDirection == 4 ) {
+                } else if (currentDirection == 4) {
                     targetCoords = {x: targetCoords.x - 1, y: targetCoords.y};
                 }
             }
@@ -455,6 +415,12 @@ class PlayerBotController extends PlayerController {
         console.warn("oh shit");
 
         return null;
+    }
+
+    canPlaceBombAndNotDie(): boolean {
+        let myPositionInt = this.positionToCoords(this.owner.position);
+        let safePlaceAfterPlacing = this.closestSafeCoordsPath(myPositionInt);
+        return safePlaceAfterPlacing != null;
     }
 
     positionToCoords(position: Coords) {

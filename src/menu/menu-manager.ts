@@ -101,8 +101,8 @@ class MenuManager extends ECS.Component {
 
             this.pst -= 0.05;
 
-            if (this.pst < 0.3) {
-                this.pst = 0.3;
+            if (this.pst < 0.1) {
+                this.pst = 0.1;
             }
         }
         if (this.keyInputCmp.isKeyPressed(ECS.Keys.KEY_RIGHT)) {
@@ -110,8 +110,8 @@ class MenuManager extends ECS.Component {
 
             this.pst += 0.05;
 
-            if (this.pst > 1) {
-                this.pst = 1;
+            if (this.pst > 0.8) {
+                this.pst = 0.8;
             }
         }
         if (this.keyInputCmp.isKeyPressed(ECS.Keys.KEY_ENTER)) {
