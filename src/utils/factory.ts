@@ -149,7 +149,7 @@ class Factory {
             .withTag(Tags.PLAYER)
             .withParent(parent)
             .withComponent(humanPlayer ? new PlayerKeyboardController(player, keyUp, keyRight, keyDown, keyLeft, keySpace) : new PlayerBotController(player))
-            .scale(Config.TEXTURE_SCALE * 3 / 5)
+            .scale(Config.TEXTURE_SCALE * 2 / 4)
             .build();
     }
 

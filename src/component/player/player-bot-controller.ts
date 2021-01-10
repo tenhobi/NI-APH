@@ -44,7 +44,7 @@ class PlayerBotController extends PlayerController {
 
     onInit() {
         super.onInit();
-        this.planInterval = setInterval(() => this.makePlan(), 250);
+        this.planInterval = setInterval(() => this.makePlan(), 100);
         this.subscribe(Messages.PLAYER_COLLIDED);
     }
 
@@ -52,37 +52,40 @@ class PlayerBotController extends PlayerController {
         super.onMessage(msg);
 
         if (msg.action == Messages.PLAYER_COLLIDED) {
-            let payload = msg.data as CollisionMessage;
-            let {player} = payload;
-            if (player == this.owner) {
-                console.log("BOT COLLISION");
-
-                if (this.plan == PlanType.PLANT) {
-                    let myPosInt = this.positionToCoords(this.owner.position);
-                    let cellToPlaceInt = this.positionToCoords(this.planCoords);
-                    if (myPosInt.x == cellToPlaceInt.x && myPosInt.y == cellToPlaceInt.y) {
-                        this.placeBomb();
-                    }
-                }
-
-                this.plan = null;
-            }
+            // let payload = msg.data as CollisionMessage;
+            // let {player} = payload;
+            // if (player == this.owner) {
+            //     console.log("BOT COLLISION");
+            //
+            //     if (this.plan == PlanType.PLANT) {
+            //         let myPosInt = this.positionToCoords(this.owner.position);
+            //         let cellToPlaceInt = this.positionToCoords(this.planCoords);
+            //
+            //         if (myPosInt.x == cellToPlaceInt.x && myPosInt.y == cellToPlaceInt.y) {
+            //             this.placeBomb();
+            //             this.plan = null;
+            //             console.info("NO PLAN 1");
+            //         }
+            //     }
+            // }
         }
     }
 
     onUpdate(delta: number, absolute: number) {
         super.onUpdate(delta, absolute);
 
-        if (this.plan == null) {
-            return
+        if (this.plan == null || this.planCoords == null) {
+            return;
         }
 
         if (this.isPlanFinished()) {
+            console.warn("I AM WAITING", this.plan);
             if (this.plan == PlanType.PLANT) {
                 console.log("placing bomb", this.bombsPlacedCount, this.maxBombCount);
                 this.placeBomb();
             }
             this.plan = null;
+            console.info("NO PLAN 2");
         } else {
             this.botMoveTo(delta, this.planCoords);
         }
@@ -92,12 +95,19 @@ class PlayerBotController extends PlayerController {
         console.log("MAKE PLAN", this.owner.name);
 
         if (this.bombsAroundPlan()) return;
+
+        if (this.plan != null) return;
+
         if (this.boxesAroundPlan()) return;
-        if (this.endGamePlan()) return;
+        // if (this.endGamePlan()) return;
     }
 
     isPlanFinished(): boolean {
         let myCoords = this.positionToCoords(this.owner.position);
+
+        if (this.planCoords == null || this.plan == null) {
+            return true;
+        }
 
         if (this.plan == PlanType.MOVE) {
             let planCoords = this.positionToCoords(this.planCoords);
@@ -132,6 +142,7 @@ class PlayerBotController extends PlayerController {
 
     // Run from bombs.
     bombsAroundPlan(): boolean {
+        console.log("^ starting BOMBS AROUND");
         let bombs = this.scene.findObjectsByTag(Tags.BOMB);
 
         let dangerFlag = false;
@@ -143,11 +154,10 @@ class PlayerBotController extends PlayerController {
         }
 
         if (dangerFlag) {
-            let safeCell = this.closestSafeCell();
-            console.log(safeCell.position);
+            let nextCellToSafeCell = this.closestSafeCoordsPath();
             this.plan = PlanType.MOVE;
-            this.planCoords = safeCell.position;
-            console.log("== bombsAroundPlan");
+            this.planCoords = nextCellToSafeCell;
+            console.log("== bombsAroundPlan", nextCellToSafeCell);
             return true;
         }
 
@@ -156,21 +166,30 @@ class PlayerBotController extends PlayerController {
 
     // Destroy boxes.
     boxesAroundPlan(): boolean {
+        console.log("^ starting DESTROY BOXES AROUND");
         let boxes = this.scene.findObjectsByTag(Tags.BREAKABLE_WALL);
-        let myCoords = this.owner.position;
 
         if (boxes.length > 0) {
-            let closestBox = this.closestCell(boxes);
+            let nextCoords = this.closestBoxPath();
 
-            this.plan = PlanType.PLANT;
-
-            if (this.positionToCoords(myCoords).x != this.positionToCoords(closestBox).x) {
-                this.planCoords = {x: myCoords.x - myCoords.x + closestBox.x, y: myCoords.y};
-            } else {
-                this.planCoords = {x: myCoords.x, y: myCoords.y - myCoords.y + closestBox.y};
+            let isABoxFlag = false;
+            for (let box of boxes) {
+                // Next Coords is a box.
+                if (nextCoords.x == box.x && nextCoords.y == box.y) {
+                    isABoxFlag = true;
+                }
             }
 
-            console.log("== boxesAroundPlan", this.owner.position, this.planCoords);
+            if (isABoxFlag) {
+                this.plan = PlanType.PLANT;
+                console.log("xx PLANT");
+            } else {
+                this.plan = PlanType.MOVE;
+                console.log("xx MOVE");
+            }
+
+            this.planCoords = nextCoords;
+            console.log("== boxesAroundPlan", this.plan == 0 ? "MOVE" : "PLANT", this.owner.position, this.planCoords);
             return true;
         }
 
@@ -191,10 +210,7 @@ class PlayerBotController extends PlayerController {
         if (this.isStraightPathBetween(myCoords, coords)) {
             // On the cell with X, center the player.
             if (myCoordsInt.x == coordsInt.x) {
-                if (myCoords.x < coordsInt.x + Config.PIXEL_EDGE) {
-                    this.moveRight(delta);
-                    console.log("RIGHT 1");
-                } else if (myCoords.x > coordsInt.x + Config.PIXEL_EDGE + Config.PIXEL_EDGE) {
+                if (myCoords.x > coordsInt.x + Config.PIXEL_EDGE) {
                     this.moveLeft(delta);
                     console.log("LEFT 1");
                 }
@@ -212,10 +228,7 @@ class PlayerBotController extends PlayerController {
 
             // On the cell with Y, center the player.
             if (myCoordsInt.y == coordsInt.y) {
-                if (myCoords.y < coordsInt.y + Config.PIXEL_EDGE) {
-                    this.moveDown(delta);
-                    console.log("DOWN 1");
-                } else if (myCoords.y > coordsInt.y + Config.PIXEL_EDGE + Config.PIXEL_EDGE) {
+                if (myCoords.y > coordsInt.y + Config.PIXEL_EDGE) {
                     this.moveUp(delta);
                     console.log("UP 1");
                 }
@@ -230,121 +243,218 @@ class PlayerBotController extends PlayerController {
                     console.log("UP 2");
                 }
             }
+
             console.log("- finished move");
         } else {
-            console.log("ELSE");
-            let cellSteps = this.cellStepsToCoord(coords);
-            if (cellSteps != null) {
-                console.log("... ... moving to crossover", cellSteps);
-                this.plan = PlanType.MOVE;
-                this.planCoords = cellSteps;
-            } else {
-                console.error("!! SHIT, gonna die :(");
-            }
+            console.warn("SHOULD NOT HAPPEN");
+            // let cellSteps = this.cellStepsToCoord(coords);
+            // if (cellSteps != null) {
+            //     console.log("... ... moving to crossover", cellSteps);
+            //     this.plan = PlanType.MOVE;
+            //     this.planCoords = cellSteps;
+            // } else {
+            //     console.error("!! SHIT, gonna die :(");
+            // }
         }
     }
 
-    // ---
-
-    cellStepsToCoord(coord: Coords): Coords {
-        console.log("---");
-        console.log("---");
+    closestSafeCoordsPath(): Coords {
         let emptyCells = this.scene.findObjectsByTag(Tags.EMPTY);
         let bombs = this.scene.findObjectsByTag(Tags.BOMB);
 
         // init map
         let n = Config.SCENE_WIDTH;
         let safeCells: number[][] = new Array(n)
-            .fill(-1)
+            .fill(-2)
             .map(() => new Array(n)
-                .fill(-1));
+                .fill(-2));
 
-        // construct map
         for (let cell of emptyCells) {
-            safeCells[cell.y][cell.x] = 0;
+            let isOKFlag = true;
+            for (let bomb of bombs) {
+                if (this.isStraightPathBetween(cell.position, bomb.position)) {
+                    isOKFlag = false;
+                }
+            }
+
+            if (isOKFlag) {
+                safeCells[cell.y][cell.x] = 0;
+            } else {
+                safeCells[cell.y][cell.x] = -1;
+            }
         }
+
+        for (let bomb of bombs) {
+            safeCells[bomb.y][bomb.x] = -2;
+        }
+
+        console.log("** ", safeCells);
 
         // BFS
         let myCoords = this.positionToCoords(this.owner.position);
-        let targetCoords = this.positionToCoords(coord);
+        let targetCoords: Coords;
 
+        // -3 = origin
+        // -2 = not walkable
+        // -1 = walkable
+        // 0 = good .. wanna find
+        // 1..4 = direction
         let queue: Queue<QueueBFS> = new Queue<QueueBFS>();
-        queue.push({coords: targetCoords, from: -2});
+        queue.push({coords: myCoords, from: -3});
         while (queue.length() > 0) {
             let current = queue.pop();
+            let currentValue = safeCells[current.coords.y][current.coords.x];
 
+            // overflow
             if (current.coords.y < 0 || current.coords.x < 0 || current.coords.y >= Config.SCENE_WIDTH || current.coords.x >= Config.SCENE_WIDTH) {
-                // console.log("A");
                 continue;
             }
 
-            if (safeCells[current.coords.y][current.coords.x] != 0) {
-                // console.log("B");
+            // not walkable
+            if (currentValue <= -2 && current.from != -3) {
                 continue;
             }
 
+            // been there
+            if (currentValue > 0) {
+                continue;
+            }
+
+            // now it's only 0 or -1:
             safeCells[current.coords.y][current.coords.x] = current.from;
-            // 1 - top, 2 - right, 3 - down, 4 - left
-            queue.push({coords: {x: current.coords.x, y: current.coords.y + 1}, from: 1});
-            queue.push({coords: {x: current.coords.x - 1, y: current.coords.y}, from: 2});
-            queue.push({coords: {x: current.coords.x, y: current.coords.y - 1}, from: 3});
-            queue.push({coords: {x: current.coords.x + 1, y: current.coords.y}, from: 4});
-        }
 
-        let targetNextCell = safeCells[myCoords.y][myCoords.x];
-        if (targetNextCell > 0) {
-            if (targetNextCell == 1) {
-                return {x: myCoords.x, y: myCoords.y - 1};
-            } else if (targetNextCell == 2 ) {
-                return {x: myCoords.x + 1, y: myCoords.y};
-            } else if (targetNextCell == 3 ) {
-                return {x: myCoords.x, y: myCoords.y + 1};
-            } else if (targetNextCell == 4 ) {
-                return {x: myCoords.x - 1, y: myCoords.y};
+            if (currentValue == -1 || current.from == -3) {
+                // 1 - top, 2 - right, 3 - down, 4 - left
+                queue.push({coords: {x: current.coords.x, y: current.coords.y + 1}, from: 1});
+                queue.push({coords: {x: current.coords.x - 1, y: current.coords.y}, from: 2});
+                queue.push({coords: {x: current.coords.x, y: current.coords.y - 1}, from: 3});
+                queue.push({coords: {x: current.coords.x + 1, y: current.coords.y}, from: 4});
+            } else if (currentValue == 0) {
+                targetCoords = current.coords;
+                break;
             }
         }
 
-        return null;
-    }
+        let lastTargetCoords: Coords = targetCoords;
+        if (targetCoords != null) {
+            while (true) {
+                let currentDirection = safeCells[targetCoords.y][targetCoords.x];
 
-    closestSafeCell(): ECS.Container {
-        let emptyCells = this.scene.findObjectsByTag(Tags.EMPTY);
-        let bombs = this.scene.findObjectsByTag(Tags.BOMB);
+                if (currentDirection == -3) {
+                    console.log("** ", lastTargetCoords);
+                    return lastTargetCoords;
+                }
 
-        let safeCells: ECS.Container[] = [];
-        for (let cell of emptyCells) {
-            for (let bomb of bombs) {
-                if (cell.x != bomb.x && cell.y != bomb.y && !this.isStraightPathBetween(cell.position, bomb.position)) {
-                    safeCells.push(cell);
+                lastTargetCoords = targetCoords;
+                if (currentDirection == 1) {
+                    targetCoords = {x: targetCoords.x, y: targetCoords.y - 1};
+                } else if (currentDirection == 2 ) {
+                    targetCoords = {x: targetCoords.x + 1, y: targetCoords.y};
+                } else if (currentDirection == 3 ) {
+                    targetCoords = {x: targetCoords.x, y: targetCoords.y + 1};
+                } else if (currentDirection == 4 ) {
+                    targetCoords = {x: targetCoords.x - 1, y: targetCoords.y};
                 }
             }
         }
 
-        let closesSafeCell = this.closestCell(safeCells);
+        console.warn("oh shit, gonna die");
 
-        console.log("ON ", this.positionToCoords(this.owner.position));
-        console.log("CLOSEST SAFE ", this.positionToCoords(closesSafeCell));
-
-        return closesSafeCell;
+        return null;
     }
 
-    closestCell(cells: ECS.Container[]): ECS.Container {
-        let myCoords = this.owner.position;
+    closestBoxPath(): Coords {
+        let emptyCells = this.scene.findObjectsByTag(Tags.EMPTY);
+        let boxes = this.scene.findObjectsByTag(Tags.BREAKABLE_WALL);
 
-        let closestBox = cells[0];
-        let closestXPath = Math.abs(closestBox.position.x - myCoords.x);
-        let closestYPath = Math.abs(closestBox.position.y - myCoords.y);
-        for (let cell of cells) {
-            let xPath = Math.abs(cell.position.x - myCoords.x);
-            let yPath = Math.abs(cell.position.y - myCoords.y)
-            if (xPath + yPath < closestXPath + closestYPath) {
-                closestBox = cell;
-                closestXPath = xPath;
-                closestYPath = yPath;
+        // init map
+        let n = Config.SCENE_WIDTH;
+        let cellsMap: number[][] = new Array(n)
+            .fill(-2)
+            .map(() => new Array(n)
+                .fill(-2));
+
+        for (let cell of emptyCells) {
+            cellsMap[cell.y][cell.x] = -1;
+        }
+
+        for (let box of boxes) {
+            cellsMap[box.y][box.x] = 0;
+        }
+
+        // BFS
+        let myCoords = this.positionToCoords(this.owner.position);
+        let targetCoords: Coords;
+
+        // -3 = origin
+        // -2 = not walkable
+        // -1 = walkable
+        // 0 = good .. wanna find
+        // 1..4 = direction
+        let queue: Queue<QueueBFS> = new Queue<QueueBFS>();
+        queue.push({coords: myCoords, from: -3});
+        while (queue.length() > 0) {
+            let current = queue.pop();
+            let currentValue = cellsMap[current.coords.y][current.coords.x];
+
+            // overflow
+            if (current.coords.y < 0 || current.coords.x < 0 || current.coords.y >= Config.SCENE_WIDTH || current.coords.x >= Config.SCENE_WIDTH) {
+                continue;
+            }
+
+            // not walkable
+            if (currentValue <= -2) {
+                continue;
+            }
+
+            // been there
+            if (currentValue > 0) {
+                continue;
+            }
+
+            // now it's only 0 or -1:
+            cellsMap[current.coords.y][current.coords.x] = current.from;
+
+            if (currentValue == -1) {
+                // 1 - top, 2 - right, 3 - down, 4 - left
+                queue.push({coords: {x: current.coords.x, y: current.coords.y + 1}, from: 1});
+                queue.push({coords: {x: current.coords.x - 1, y: current.coords.y}, from: 2});
+                queue.push({coords: {x: current.coords.x, y: current.coords.y - 1}, from: 3});
+                queue.push({coords: {x: current.coords.x + 1, y: current.coords.y}, from: 4});
+            } else if (currentValue == 0) {
+                targetCoords = current.coords;
+                break;
             }
         }
 
-        return closestBox;
+        console.log("** ", cellsMap);
+
+        let lastTargetCoords: Coords = targetCoords;
+        if (targetCoords != null) {
+            while (true) {
+                let currentDirection = cellsMap[targetCoords.y][targetCoords.x];
+
+                if (currentDirection == -3) {
+                    console.log("** ", lastTargetCoords);
+                    return lastTargetCoords;
+                }
+
+                lastTargetCoords = targetCoords;
+                if (currentDirection == 1) {
+                    targetCoords = {x: targetCoords.x, y: targetCoords.y - 1};
+                } else if (currentDirection == 2 ) {
+                    targetCoords = {x: targetCoords.x + 1, y: targetCoords.y};
+                } else if (currentDirection == 3 ) {
+                    targetCoords = {x: targetCoords.x, y: targetCoords.y + 1};
+                } else if (currentDirection == 4 ) {
+                    targetCoords = {x: targetCoords.x - 1, y: targetCoords.y};
+                }
+            }
+        }
+
+        console.warn("oh shit");
+
+        return null;
     }
 
     positionToCoords(position: Coords) {
